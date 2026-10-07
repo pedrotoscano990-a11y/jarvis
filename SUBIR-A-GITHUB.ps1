@@ -67,16 +67,25 @@ git branch -M main 2>$null | Out-Null
 git remote remove origin 2>$null | Out-Null
 git remote add origin "https://github.com/$usuario/$nombre.git"
 
-$urlNuevo = "https://github.com/new?name=$nombre"
-O "Abriendo el navegador para crear el repositorio VACÍO (público, sin README)…"
-C "  Si no se abre solo, visite:  $urlNuevo"
-Start-Process $urlNuevo
+$estado = "000"
+try {
+    $r = Invoke-WebRequest -Uri "https://github.com/$usuario/$nombre" -Method Head -MaximumRedirection 0 -ErrorAction SilentlyContinue
+    $estado = $r.StatusCode
+} catch { $estado = "404" }
 
-Write-Host ""
-O "Cuando el repositorio exista, pulse Intro y empujaré los archivos."
-O "(GitHub pedirá usuario y, como contraseña, un token personal:"
-O " Settings → Developer settings → Personal access tokens)"
-Read-Host "¿Creado? (Intro para continuar)"
+if ($estado -eq 200) {
+    C "El repositorio https://github.com/$usuario/$nombre ya existe: lo uso tal cual, sin abrir el navegador."
+} else {
+    $urlNuevo = "https://github.com/new?name=$nombre"
+    O "Abriendo el navegador para crear el repositorio VACÍO (público, sin README)…"
+    C "  Si no se abre solo, visite:  $urlNuevo"
+    Start-Process $urlNuevo
+    Write-Host ""
+    O "Cuando el repositorio exista, pulse Intro y empujaré los archivos."
+    O "(GitHub pedirá usuario y, como contraseña, un token personal:"
+    O " Settings → Developer settings → Personal access tokens)"
+    Read-Host "¿Creado? (Intro para continuar)"
+}
 
 C "Empujando los archivos…"
 git push -u origin main

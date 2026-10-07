@@ -98,16 +98,20 @@ O "No detecto GitHub CLI autenticado. Seguimos por el camino guiado, señor."
 git remote remove origin >/dev/null 2>&1 || true
 git remote add origin "https://github.com/$USUARIO/$NOMBRE.git"
 
-URL_NUEVO="https://github.com/new?name=$NOMBRE"
-O "Abriendo el navegador para crear el repositorio VACÍO (público, sin README)…"
-C "  Si no se abre solo, visite:  $URL_NUEVO"
-{ command -v xdg-open >/dev/null 2>&1 && xdg-open "$URL_NUEVO" >/dev/null 2>&1; } || \
-{ command -v open     >/dev/null 2>&1 && open     "$URL_NUEVO" >/dev/null 2>&1; } || \
-{ command -v powershell >/dev/null 2>&1 && powershell -c "Start-Process '$URL_NUEVO'" >/dev/null 2>&1; } || true
-
-echo
-O "Cuando el repositorio exista, pulse Intro y empujaré los archivos."
-read -r -p "¿Creado? (Intro para continuar) " _
+ESTADO=$(curl -s -o /dev/null -m 10 -w "%{http_code}" "https://github.com/$USUARIO/$NOMBRE" 2>/dev/null || echo "000")
+if [ "$ESTADO" = "200" ]; then
+  C "El repositorio https://github.com/$USUARIO/$NOMBRE ya existe: lo uso tal cual, sin abrir el navegador."
+else
+  URL_NUEVO="https://github.com/new?name=$NOMBRE"
+  O "Abriendo el navegador para crear el repositorio VACÍO (público, sin README)…"
+  C "  Si no se abre solo, visite:  $URL_NUEVO"
+  { command -v xdg-open >/dev/null 2>&1 && xdg-open "$URL_NUEVO" >/dev/null 2>&1; } || \
+  { command -v open     >/dev/null 2>&1 && open     "$URL_NUEVO" >/dev/null 2>&1; } || \
+  { command -v powershell >/dev/null 2>&1 && powershell -c "Start-Process '$URL_NUEVO'" >/dev/null 2>&1; } || true
+  echo
+  O "Cuando el repositorio exista, pulse Intro y empujaré los archivos."
+  read -r -p "¿Creado? (Intro para continuar) " _
+fi
 
 if git push -u origin main; then
   echo
@@ -117,6 +121,11 @@ if git push -u origin main; then
   C "Último paso — active la aplicación web:"
   C "  Settings → Pages → Source: «Deploy from a branch» → main / (root) → Save"
   C "  En un minuto quedará en:  https://$USUARIO.github.io/$NOMBRE/"
+elif git push -u origin main --force; then
+  echo
+  C "Traslado completado (se sobreescribió el contenido previo del repositorio), señor."
+  C "  Repositorio:  https://github.com/$USUARIO/$NOMBRE"
+  C "  Active Pages en: Settings → Pages → Deploy from a branch → main / (root) → Save"
 else
   echo
   E "El empuje falló. Causas habituales:"

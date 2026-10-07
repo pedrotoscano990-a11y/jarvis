@@ -63,8 +63,8 @@ Su lógica de mando vive en `nucleo_vivo.js`, dentro de su almacenamiento, y se 
 
 ## 🌐 Versión web
 
-Ábralo aquí mismo si publica este repositorio con **GitHub Pages**:
-`https://TU-USUARIO.github.io/TU-REPO/`
+Una vez publicado con GitHub Pages, quedará en:
+`https://pedrotoscano990-a11y.github.io/jarvis/`
 
 - HUD estilo Stark con reactor Arc animado
 - Informe del día: **tiempo real, agenda y noticias de México en vivo**
@@ -113,14 +113,14 @@ Si tiene instalado [GitHub CLI](https://cli.github.com) y ya se autenticó (`gh 
 
 Después de subirlo, un último clic en GitHub:
 **Settings → Pages → Source: `Deploy from a branch` → `main` / `(root)` → Save**
-En un minuto: `https://TU-USUARIO.github.io/TU-REPO/`
+En un minuto: `https://pedrotoscano990-a11y.github.io/jarvis/`
 
 ### Sus direcciones (cuando lo suba)
 
 | | Dirección |
 |---|---|
-| Repositorio | `https://github.com/TU-USUARIO/jarvis` |
-| Aplicación web (tras activar Pages) | `https://TU-USUARIO.github.io/jarvis/` |
+| Repositorio | `https://github.com/pedrotoscano990-a11y/jarvis` |
+| Aplicación web (tras activar Pages) | `https://pedrotoscano990-a11y.github.io/jarvis/` |
 
 ### A mano, si lo prefiere
 ```bash
@@ -128,7 +128,7 @@ git init
 git add .
 git commit -m "J.A.R.V.I.S. — primera versión"
 git branch -M main
-git remote add origin https://github.com/TU-USUARIO/TU-REPO.git
+git remote add origin https://github.com/pedrotoscano990-a11y/jarvis.git
 git push -u origin main
 ```
 
@@ -152,6 +152,7 @@ git push -u origin main
 ├── JARVIS.apk              ← aplicación nativa Android
 ├── android/                ← código fuente Kotlin (Android Studio)
 ├── capturas/               ← imágenes de la interfaz
+├── ENLACES.md              ← guía personalizada de publicación en GitHub
 ├── LEEME-JARVIS.md         ← guía de la versión web / PWA
 └── LEEME-JARVIS-ANDROID.md ← guía de la app nativa
 ```
