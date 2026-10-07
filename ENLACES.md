@@ -1,3 +1,8 @@
+> ## ✅ PUBLICADO — 6 de octubre de 2026
+> El repositorio ya está en su casa y la aplicación web está **en vivo**:
+> **https://pedrotoscano990-a11y.github.io/jarvis/**
+> Este documento queda como guía para futuras actualizaciones.
+
 # J.A.R.V.I.S. → GitHub
 ### Guía personalizada para **pedrotoscano990-a11y**
 
