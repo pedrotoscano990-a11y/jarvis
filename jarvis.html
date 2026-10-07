@@ -1,0 +1,3173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>J.A.R.V.I.S. — Stark Industries</title>
+<meta name="theme-color" content="#03070d">
+<meta name="color-scheme" content="dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="JARVIS">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icono-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icono-192.png">
+<style>
+  :root{
+    --ciano:#5ad7ff;
+    --ciano-osc:#0a93c4;
+    --oro:#ffb84d;
+    --oro-osc:#c97f14;
+    --rojo:#ff4d4d;
+    --fondo:#03070d;
+    --panel:rgba(8,20,32,.72);
+    --borde:rgba(90,215,255,.28);
+    --texto:#d8f2ff;
+    --atenuado:#5f8ba3;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--fondo);
+    color:var(--texto);
+    font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    overflow:hidden;
+    display:flex;flex-direction:column;
+    position:relative;
+    transition:filter 1s ease;
+  }
+  body.reposo{filter:brightness(.42) saturate(.5)}
+  body.reposo .punto{background:var(--oro);box-shadow:0 0 10px var(--oro)}
+  /* ---------- Fondo ---------- */
+  .bg-grid{
+    position:fixed;inset:0;z-index:0;pointer-events:none;
+    background-image:
+      linear-gradient(rgba(90,215,255,.06) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(90,215,255,.06) 1px,transparent 1px);
+    background-size:44px 44px;
+    mask-image:radial-gradient(circle at 50% 45%,#000 10%,transparent 78%);
+    -webkit-mask-image:radial-gradient(circle at 50% 45%,#000 10%,transparent 78%);
+  }
+  .bg-glow{
+    position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:
+      radial-gradient(circle at 22% 40%,rgba(10,147,196,.20),transparent 45%),
+      radial-gradient(circle at 82% 65%,rgba(201,127,20,.14),transparent 45%),
+      radial-gradient(circle at 50% 120%,rgba(90,215,255,.12),transparent 60%);
+  }
+  .scan{
+    position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.35;
+    background:repeating-linear-gradient(to bottom,rgba(255,255,255,.035) 0 1px,transparent 1px 3px);
+  }
+
+  /* ---------- Cabecera ---------- */
+  header{
+    position:relative;z-index:3;
+    display:flex;align-items:center;gap:18px;
+    padding:14px 22px;
+    border-bottom:1px solid var(--borde);
+    background:linear-gradient(90deg,rgba(6,18,30,.9),rgba(6,18,30,.35),rgba(6,18,30,.9));
+    backdrop-filter:blur(6px);
+  }
+  .marca{display:flex;align-items:center;gap:12px}
+  .marca .hex{
+    width:34px;height:34px;flex:0 0 auto;
+    display:grid;place-items:center;
+    border:1px solid var(--ciano);border-radius:8px;
+    box-shadow:0 0 14px rgba(90,215,255,.5),inset 0 0 12px rgba(90,215,255,.25);
+    font-weight:700;font-size:15px;color:var(--ciano);letter-spacing:1px;
+  }
+  .titulo{font-size:19px;font-weight:600;letter-spacing:5px;color:#eaf9ff;text-shadow:0 0 22px rgba(90,215,255,.7)}
+  .subtitulo{font-size:9.5px;letter-spacing:2.4px;color:var(--atenuado);text-transform:uppercase;margin-top:3px}
+  header .relleno{flex:1}
+  .pildora{
+    display:flex;align-items:center;gap:8px;
+    font-size:10.5px;letter-spacing:1.6px;text-transform:uppercase;
+    border:1px solid var(--borde);border-radius:999px;
+    padding:7px 14px;color:var(--atenuado);background:rgba(90,215,255,.05);
+  }
+  .punto{width:7px;height:7px;border-radius:50%;background:var(--ciano);box-shadow:0 0 10px var(--ciano);animation:latido 1.8s infinite}
+  @keyframes latido{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.75)}}
+
+  /* ---------- Layout ---------- */
+  main{
+    position:relative;z-index:3;flex:1;min-height:0;
+    display:grid;grid-template-columns:minmax(280px,1fr) minmax(320px,1.15fr);
+    gap:16px;padding:16px 22px;
+  }
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--borde);
+    border-radius:14px;
+    position:relative;
+    backdrop-filter:blur(4px);
+    box-shadow:0 0 30px rgba(0,0,0,.5),inset 0 0 40px rgba(90,215,255,.04);
+    min-height:0;
+    display:flex;flex-direction:column;
+  }
+  .panel::before,.panel::after{
+    content:"";position:absolute;width:16px;height:16px;border:2px solid var(--oro);opacity:.65;
+  }
+  .panel::before{top:-1px;left:-1px;border-right:none;border-bottom:none;border-radius:14px 0 0 0}
+  .panel::after{bottom:-1px;right:-1px;border-left:none;border-top:none;border-radius:0 0 14px 0}
+  .panel-titulo{
+    font-size:10px;letter-spacing:2.6px;text-transform:uppercase;color:var(--ciano);
+    padding:12px 16px;border-bottom:1px solid rgba(90,215,255,.15);
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+    background:rgba(7,19,31,.94);border-radius:13px 13px 0 0;position:relative;z-index:2;
+    flex:0 0 auto;
+  }
+  .panel-titulo span:last-child{color:var(--atenuado);letter-spacing:1.4px}
+
+  /* ---------- Panel izquierdo: reactor ---------- */
+  .izq{overflow-y:auto}
+  .reactor-wrap{display:flex;flex-direction:column;align-items:center;padding:20px 16px 8px}
+  .reactor{position:relative;width:190px;height:190px;display:grid;place-items:center}
+  .reactor .halo{
+    position:absolute;inset:-26px;border-radius:50%;
+    background:radial-gradient(circle,rgba(90,215,255,.24),transparent 62%);
+    animation:respirar 3.4s ease-in-out infinite;
+  }
+  @keyframes respirar{0%,100%{opacity:.55;transform:scale(.94)}50%{opacity:1;transform:scale(1.06)}}
+  .anillo{position:absolute;border-radius:50%;border:2px solid transparent}
+  .a1{
+    inset:0;border-top-color:var(--ciano);border-right-color:rgba(90,215,255,.25);
+    animation:girar 4.6s linear infinite;
+  }
+  .a2{
+    inset:16px;border-bottom-color:var(--oro);border-left-color:rgba(255,184,77,.25);
+    animation:girar 7s linear infinite reverse;
+  }
+  .a3{
+    inset:32px;border-top-color:rgba(90,215,255,.85);
+    animation:girar 2.6s linear infinite;
+  }
+  .a4{
+    inset:48px;border:1px dashed rgba(90,215,255,.45);
+    animation:girar 14s linear infinite;
+  }
+  .aro{
+    position:absolute;inset:62px;border-radius:50%;
+    background:conic-gradient(from 0deg,rgba(90,215,255,.7) 0 6deg,transparent 6deg 30deg);
+    animation:girar 3.2s linear infinite;
+    mask-image:radial-gradient(circle,transparent 58%,#000 60%);
+    -webkit-mask-image:radial-gradient(circle,transparent 58%,#000 60%);
+  }
+  .nucleo{
+    width:74px;height:74px;border-radius:50%;
+    background:radial-gradient(circle at 50% 45%,#ffffff,#bfeaff 22%,var(--ciano) 48%,var(--ciano-osc) 76%,#053c52);
+    box-shadow:0 0 26px var(--ciano),0 0 70px rgba(90,215,255,.65),inset 0 0 22px rgba(255,255,255,.85);
+    animation:pulso 2.1s ease-in-out infinite;
+  }
+  @keyframes pulso{0%,100%{transform:scale(1);opacity:.93}50%{transform:scale(1.07);opacity:1}}
+  @keyframes girar{to{transform:rotate(360deg)}}
+  .reactor.activo .anillo{border-color:var(--oro)}
+  .reactor.maximo .anillo{border-color:var(--oro);border-width:3px}
+  .reactor.maximo .nucleo{
+    background:radial-gradient(circle at 50% 45%,#ffffff,#ffe6bd 22%,var(--oro) 48%,var(--oro-osc) 76%,#5a3200);
+    box-shadow:0 0 40px var(--oro),0 0 130px rgba(255,184,77,.85),inset 0 0 26px rgba(255,255,255,.9);
+    animation:pulso 1s ease-in-out infinite;
+  }
+  .estado-reactor{
+    margin-top:12px;font-size:10px;letter-spacing:2.6px;text-transform:uppercase;
+    color:var(--ciano);text-shadow:0 0 12px rgba(90,215,255,.6);text-align:center;
+  }
+
+  .sistemas{padding:6px 18px 18px;display:flex;flex-direction:column;gap:11px}
+  .sistema{display:grid;grid-template-columns:1fr auto;gap:4px 10px;font-size:11px}
+  .sistema .nombre{letter-spacing:1.4px;text-transform:uppercase;color:#a9d8ec}
+  .sistema .valor{color:var(--ciano);font-variant-numeric:tabular-nums}
+  .barra{
+    grid-column:1/3;height:5px;border-radius:3px;background:rgba(90,215,255,.12);overflow:hidden;
+  }
+  .barra i{
+    display:block;height:100%;width:60%;border-radius:3px;
+    background:linear-gradient(90deg,var(--ciano-osc),var(--ciano));
+    box-shadow:0 0 12px rgba(90,215,255,.8);
+    transition:width .7s cubic-bezier(.4,0,.2,1),background .3s;
+  }
+  .barra i.alto{background:linear-gradient(90deg,var(--oro-osc),var(--oro));box-shadow:0 0 12px rgba(255,184,77,.8)}
+  .barra i.critico{background:linear-gradient(90deg,#a01e1e,var(--rojo));box-shadow:0 0 12px rgba(255,77,77,.9)}
+  .registro{
+    margin:6px 18px 18px;padding:10px 12px;border-left:2px solid var(--oro-osc);
+    background:rgba(255,184,77,.06);font-size:10.5px;line-height:1.7;color:#cfe9f7;
+    letter-spacing:.4px;min-height:74px;
+  }
+  .registro b{color:var(--oro)}
+
+  /* ---------- Panel derecho: consola ---------- */
+  .der{overflow:hidden}
+  .consola{
+    flex:1;min-height:0;overflow-y:auto;padding:16px 18px;
+    display:flex;flex-direction:column;gap:14px;scroll-behavior:smooth;
+  }
+  .msg{max-width:88%;font-size:13.5px;line-height:1.62;animation:entrar .32s ease}
+  @keyframes entrar{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .msg .quien{
+    font-size:9px;letter-spacing:2.2px;text-transform:uppercase;color:var(--atenuado);margin-bottom:5px;
+  }
+  .msg .cuerpo{
+    padding:10px 14px;border-radius:10px;
+    border:1px solid rgba(90,215,255,.22);
+    background:rgba(90,215,255,.07);
+  }
+  .msg.jarvis .cuerpo{border-left:3px solid var(--ciano)}
+  .msg.usuario{align-self:flex-end;text-align:right}
+  .msg.usuario .quien{color:var(--oro);text-align:right}
+  .msg.usuario .cuerpo{
+    border-color:rgba(255,184,77,.28);border-right:3px solid var(--oro);
+    background:rgba(255,184,77,.08);text-align:left;color:#ffe9c6;
+  }
+  .msg.sistema{align-self:center;max-width:96%;text-align:center}
+  .msg.sistema .cuerpo{
+    background:transparent;border:none;color:var(--atenuado);
+    font-size:10.5px;letter-spacing:2px;text-transform:uppercase;padding:2px;
+  }
+  .escribiendo .cuerpo::after{
+    content:"···";animation:parpadeo 1.1s steps(4,end) infinite;color:var(--ciano);letter-spacing:2px;
+  }
+  @keyframes parpadeo{0%{opacity:.2}50%{opacity:1}100%{opacity:.2}}
+  .cita{color:var(--oro);font-style:italic}
+  .codigo{
+    display:inline-block;margin-top:6px;padding:6px 9px;border:1px dashed rgba(90,215,255,.4);
+    border-radius:7px;font-family:Consolas,"Courier New",monospace;font-size:11.5px;color:var(--ciano);
+    word-break:break-all;
+  }
+
+  /* ---------- Pie ---------- */
+  footer{
+    position:relative;z-index:3;
+    border-top:1px solid var(--borde);
+    background:linear-gradient(0deg,rgba(6,18,30,.95),rgba(6,18,30,.55));
+    padding:12px 22px 16px;
+    display:flex;flex-direction:column;gap:10px;
+  }
+  .visual{
+    height:26px;width:100%;display:block;opacity:0;transition:opacity .3s;
+  }
+  .visual.on{opacity:1}
+  .barra-controles{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .btn{
+    cursor:pointer;border:1px solid var(--borde);background:rgba(90,215,255,.07);
+    color:var(--texto);border-radius:10px;padding:11px 16px;font-size:12px;letter-spacing:1.4px;
+    text-transform:uppercase;transition:.2s;font-family:inherit;
+  }
+  .btn:hover{background:rgba(90,215,255,.18);border-color:var(--ciano);box-shadow:0 0 16px rgba(90,215,255,.35)}
+  .btn.mic{
+    width:58px;height:58px;border-radius:50%;font-size:20px;display:grid;place-items:center;padding:0;
+    background:radial-gradient(circle,rgba(90,215,255,.25),rgba(90,215,255,.06));
+  }
+  .btn.mic.escuchando{
+    border-color:var(--rojo);color:#fff;
+    box-shadow:0 0 0 0 rgba(255,77,77,.6);animation:onda 1.5s infinite;
+  }
+  @keyframes onda{
+    0%{box-shadow:0 0 0 0 rgba(255,77,77,.55)}
+    100%{box-shadow:0 0 0 22px rgba(255,77,77,0)}
+  }
+  input[type=text]{
+    flex:1;min-width:160px;background:rgba(3,12,20,.85);color:var(--texto);
+    border:1px solid var(--borde);border-radius:10px;padding:14px 16px;font-size:13.5px;
+    font-family:inherit;outline:none;
+  }
+  input[type=text]:focus{border-color:var(--ciano);box-shadow:0 0 18px rgba(90,215,255,.3)}
+  input::placeholder{color:#476b7d}
+  .sugerencias{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{
+    cursor:pointer;font-size:10.5px;letter-spacing:1.2px;color:var(--atenuado);
+    border:1px solid rgba(90,215,255,.18);border-radius:999px;padding:6px 12px;transition:.2s;
+    background:rgba(90,215,255,.04);
+  }
+  .chip:hover{color:var(--ciano);border-color:var(--ciano);background:rgba(90,215,255,.12)}
+
+  /* ---------- Panel Hogar (terminal móvil) ---------- */
+  .hogar{display:none}
+  .hogar-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 16px 4px}
+  .hogar-reloj{
+    grid-column:1/3;border:1px solid rgba(90,215,255,.18);border-radius:12px;padding:12px 14px;
+    background:linear-gradient(135deg,rgba(90,215,255,.10),rgba(255,184,77,.05));
+  }
+  .hogar-reloj b{display:block;font-size:34px;letter-spacing:5px;color:#eaf9ff;text-shadow:0 0 20px rgba(90,215,255,.6);font-variant-numeric:tabular-nums}
+  .hogar-reloj span{font-size:10.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--atenuado)}
+  .hogar-reloj em{display:block;margin-top:6px;font-style:normal;font-size:11.5px;color:var(--oro);letter-spacing:.4px}
+  .hogar-card{
+    border:1px solid rgba(90,215,255,.16);border-radius:11px;padding:9px 11px;
+    background:rgba(90,215,255,.055);display:flex;flex-direction:column;gap:3px;
+  }
+  .hogar-card h4{font-size:8.5px;letter-spacing:1.8px;text-transform:uppercase;color:var(--atenuado);font-weight:600}
+  .hogar-card p{font-size:13px;color:#dff2fc;line-height:1.45}
+  .hogar-card p b{color:var(--ciano);font-weight:600}
+  .hogar-card.aviso-card{border-color:rgba(255,77,77,.4);background:rgba(255,77,77,.08)}
+  .hogar-card.aviso-card p b{color:#ff9d9d}
+  .hogar-acciones{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:12px 16px 16px}
+  .btn.accion{padding:14px 10px;font-size:11px;letter-spacing:1.6px;display:flex;align-items:center;justify-content:center;gap:8px}
+  .btn.accion.activo{border-color:var(--oro);color:#ffe9c6;background:rgba(255,184,77,.16);box-shadow:0 0 16px rgba(255,184,77,.35)}
+
+  /* ---------- Modal de cámara ---------- */
+  .camara{position:fixed;inset:0;z-index:11;display:none;grid-template-rows:auto 1fr auto;background:rgba(2,6,11,.97)}
+  .camara.on{display:grid}
+  .camara .cam-cab{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--borde);
+    font-size:10px;letter-spacing:2.4px;text-transform:uppercase;color:var(--ciano)}
+  .camara .cam-cuerpo{position:relative;display:grid;place-items:center;overflow:hidden;padding:10px}
+  .camara video,.camara canvas{max-width:100%;max-height:100%;border-radius:12px;border:1px solid var(--borde)}
+  .camara canvas.destello{position:absolute;inset:0;border-radius:0;border:none;background:#fff;opacity:0;pointer-events:none}
+  .camara canvas.destello.on{animation:destello .45s ease}
+  @keyframes destello{0%{opacity:.9}100%{opacity:0}}
+  .camara canvas.foto{display:none}
+  .camara .cam-pie{display:flex;gap:10px;justify-content:center;padding:14px 16px 22px;flex-wrap:wrap}
+
+  /* ---------- Cinta de medios ---------- */
+  .ticker{
+    position:relative;z-index:3;display:flex;align-items:stretch;height:32px;overflow:hidden;
+    background:rgba(3,10,17,.94);border-bottom:1px solid var(--borde);
+  }
+  .ticker .etiqueta{
+    flex:0 0 auto;display:flex;align-items:center;gap:7px;padding:0 14px;white-space:nowrap;
+    font-size:9.5px;letter-spacing:2px;text-transform:uppercase;color:var(--oro);
+    border-right:1px solid var(--borde);background:rgba(255,184,77,.07);
+  }
+  .ticker .ventana{flex:1;overflow:hidden;display:flex;align-items:center}
+  .ticker .cinta{display:flex;gap:34px;white-space:nowrap;font-size:11px;color:#a9d8ec;animation:deslizar 120s linear infinite}
+  .ticker .cinta:hover{animation-play-state:paused}
+  .ticker .cinta b{color:var(--ciano);font-weight:600}
+  @keyframes deslizar{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+  /* ---------- Módulo de seguridad ---------- */
+  .subtitulo-bloque{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    font-size:10px;letter-spacing:2.4px;text-transform:uppercase;color:var(--ciano);
+    padding:16px 18px 6px;margin-top:6px;border-top:1px solid rgba(90,215,255,.12);
+  }
+  .estado-senor + span,.subtitulo-bloque:first-of-type{border-top:none}
+  .subtitulo-bloque span:last-child{color:var(--atenuado);letter-spacing:1.2px}
+  .seguridad{padding:6px 18px 4px;display:flex;flex-direction:column;gap:12px}
+  .fila-seg{display:flex;align-items:center;gap:14px}
+  .escudo{
+    width:56px;height:56px;flex:0 0 auto;display:grid;place-items:center;border-radius:14px;
+    border:1px solid rgba(90,215,255,.35);background:rgba(90,215,255,.07);transition:.4s;
+  }
+  .escudo svg{width:30px;height:30px;color:var(--ciano);filter:drop-shadow(0 0 6px rgba(90,215,255,.8))}
+  .escudo.comprometido{border-color:var(--rojo);background:rgba(255,77,77,.1);animation:alarma 1.1s infinite}
+  .escudo.comprometido svg{color:var(--rojo);filter:drop-shadow(0 0 6px rgba(255,77,77,.9))}
+  @keyframes alarma{0%,100%{box-shadow:inset 0 0 18px rgba(255,77,77,.2)}50%{box-shadow:inset 0 0 26px rgba(255,77,77,.55)}}
+  .contadores{display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1}
+  .contador{border:1px solid rgba(90,215,255,.16);border-radius:9px;padding:6px 9px;background:rgba(90,215,255,.04)}
+  .contador b{display:block;font-size:15px;color:#eaf9ff;font-variant-numeric:tabular-nums;line-height:1.25}
+  .contador small{font-size:8.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--atenuado)}
+  .barra-escaneo{position:relative;height:22px;border:1px solid rgba(90,215,255,.2);border-radius:6px;overflow:hidden;background:rgba(3,12,20,.7)}
+  .barra-escaneo i{position:absolute;top:0;bottom:0;left:0;width:0;background:linear-gradient(90deg,rgba(10,147,196,.55),rgba(90,215,255,.75));transition:width .3s linear}
+  .barra-escaneo span{position:relative;z-index:1;display:block;text-align:center;font-size:9.5px;letter-spacing:1.6px;text-transform:uppercase;color:#d8f2ff;line-height:22px}
+  .lista-amenazas{display:flex;flex-direction:column;gap:6px}
+  .amenaza{
+    display:grid;grid-template-columns:8px 1fr auto;gap:8px;align-items:center;font-size:10.5px;
+    padding:6px 8px;border:1px solid rgba(255,77,77,.22);border-radius:7px;background:rgba(255,77,77,.06);
+    animation:entrar .3s ease;
+  }
+  .amenaza .nivel{width:8px;height:8px;border-radius:50%}
+  .n-medio{background:var(--oro);box-shadow:0 0 8px var(--oro)}
+  .n-alto{background:#ff8a3d;box-shadow:0 0 8px #ff8a3d}
+  .n-critico{background:var(--rojo);box-shadow:0 0 8px var(--rojo);animation:latido 1.2s infinite}
+  .amenaza .nombre{color:#ffd9d9;font-family:Consolas,"Courier New",monospace}
+  .amenaza .origen{color:var(--atenuado);font-size:9px}
+  .sin-amenazas{font-size:10.5px;color:var(--atenuado);padding:4px 2px}
+
+  /* ---------- Estado del señor ---------- */
+  .estado-senor{margin:6px 18px 18px;border:1px solid rgba(90,215,255,.16);border-radius:10px;padding:10px 12px;background:rgba(90,215,255,.04)}
+  .estado-senor .linea{display:flex;justify-content:space-between;gap:10px;padding:3px 0;font-size:10.5px}
+  .estado-senor .linea span{color:var(--atenuado);text-transform:uppercase;letter-spacing:1.3px;font-size:9px}
+  .estado-senor .linea b{color:#eaf9ff;font-weight:500}
+
+  /* ---------- Contravirus ---------- */
+  .cv-overlay{
+    position:fixed;inset:0;z-index:9;display:grid;place-items:center;opacity:0;pointer-events:none;transition:opacity .35s;
+    background:radial-gradient(circle at 50% 50%,rgba(60,0,0,.93),rgba(4,2,4,.97));
+  }
+  .cv-overlay.on{opacity:1;pointer-events:auto}
+  .cv-panel{width:min(560px,90vw);display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;padding:20px}
+  .cv-nucleo{
+    width:132px;height:132px;border-radius:50%;display:grid;place-items:center;position:relative;animation:girar 1.6s linear infinite;
+    background:conic-gradient(from 0deg,rgba(255,77,77,.9) 0 40deg,transparent 40deg 90deg,rgba(255,140,60,.7) 90deg 140deg,transparent 140deg 200deg,rgba(255,77,77,.7) 200deg 260deg,transparent 260deg 360deg);
+    box-shadow:0 0 40px rgba(255,77,77,.5);
+  }
+  .cv-nucleo::after{content:"";position:absolute;inset:22px;border-radius:50%;border:1px solid rgba(255,77,77,.5);background:radial-gradient(circle,#2b0404,#120101)}
+  .cv-nucleo span{position:relative;z-index:1;font-size:12px;letter-spacing:4px;color:#ffd9d9;text-shadow:0 0 12px rgba(255,77,77,.9)}
+  .cv-titulo{font-size:15px;letter-spacing:6px;text-transform:uppercase;color:#ffe3e3;text-shadow:0 0 18px rgba(255,77,77,.8)}
+  .cv-sub{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#ff9d9d}
+  .cv-lista{width:100%;display:flex;flex-direction:column;gap:7px;margin-top:4px}
+  .cv-amenaza{
+    display:flex;justify-content:space-between;gap:10px;padding:8px 12px;border-radius:8px;transition:.4s;
+    font-family:Consolas,"Courier New",monospace;font-size:11.5px;color:#ffd9d9;
+    border:1px solid rgba(255,77,77,.35);background:rgba(255,77,77,.08);
+  }
+  .cv-amenaza span{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#ff9d9d}
+  .cv-amenaza.tachada{border-color:rgba(90,215,255,.5);background:rgba(90,215,255,.08);color:#9fd4ea;text-decoration:line-through}
+  .cv-amenaza.tachada span{color:var(--ciano);text-decoration:none}
+
+  .pildora.alerta{border-color:rgba(255,77,77,.6);color:#ffd9d9;background:rgba(255,77,77,.14);animation:latido 1.4s infinite}
+  .pildora.alerta .punto{background:var(--rojo);box-shadow:0 0 10px var(--rojo)}
+
+  /* ---------- Arranque ---------- */
+  .arranque{
+    position:fixed;inset:0;z-index:10;background:rgba(2,6,11,.97);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;
+    padding:30px;transition:opacity .8s;text-align:center;
+  }
+  .arranque.oculto{opacity:0;pointer-events:none}
+  .arranque .logo{
+    font-size:30px;letter-spacing:12px;color:#eaf9ff;text-shadow:0 0 34px rgba(90,215,255,.85);
+  }
+  .arranque .lineas{
+    font-family:Consolas,"Courier New",monospace;font-size:12px;color:var(--ciano);
+    text-align:left;min-height:132px;width:min(430px,88vw);line-height:2;
+  }
+  .arranque .lineas div{opacity:0;animation:aparecer .35s forwards}
+  @keyframes aparecer{to{opacity:1}}
+  .aviso{
+    max-width:min(560px,90vw);font-size:11.5px;line-height:1.7;color:var(--atenuado);
+    border:1px dashed rgba(255,184,77,.35);border-radius:10px;padding:12px 14px;background:rgba(255,184,77,.05);
+  }
+  .aviso b{color:var(--oro)}
+  .oculto{display:none !important}
+
+  @media (max-width:900px){
+    header{padding:10px 14px;gap:10px;flex-wrap:wrap}
+    .subtitulo{display:none}
+    .titulo{font-size:14px;letter-spacing:2.4px}
+    .marca .hex{width:28px;height:28px;font-size:12px}
+    .pildora{padding:6px 10px;font-size:9.5px;letter-spacing:1px}
+    header .relleno{flex:0}
+    main{
+      display:flex;flex-direction:column;padding:10px;gap:10px;overflow-y:auto;
+    }
+    .hogar{display:flex;order:0;flex:0 0 auto}
+    .der{order:1;min-height:58vh;flex:0 0 auto}
+    .izq{order:2;flex:0 0 auto}
+    .reactor{width:132px;height:132px}
+    .nucleo{width:52px;height:52px}
+    .aro{inset:44px}.a2{inset:12px}.a3{inset:23px}.a4{inset:34px}
+    .visual{height:20px}
+    footer{padding:10px 14px 14px}
+    .msg{max-width:94%}
+  }
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+<div class="scan"></div>
+
+<header>
+  <div class="marca">
+    <div class="hex">Fe</div>
+    <div>
+      <div class="titulo">J.A.R.V.I.S.</div>
+      <div class="subtitulo">Just A Rather Very Intelligent System</div>
+    </div>
+  </div>
+  <div class="relleno"></div>
+  <div class="pildora"><span class="punto"></span><span id="estadoPildora">Sistemas en línea</span></div>
+  <div class="pildora" id="reloj">--:--</div>
+  <div class="pildora oculto alerta" id="pildoraAlerta"><span class="punto"></span><span id="textoAlerta">0 amenazas</span></div>
+</header>
+
+<div class="ticker">
+  <div class="etiqueta">◉ Red de medios</div>
+  <div class="ventana"><div class="cinta" id="cinta"><span>Conectando con las agencias, señor…</span></div></div>
+</div>
+
+<main>
+  <!-- PANEL HOGAR (móvil) -->
+  <section class="panel hogar" id="panelHogar">
+    <div class="panel-titulo"><span>Hogar · Terminal móvil</span><span id="hogarEstado">en línea</span></div>
+    <div class="hogar-grid">
+      <div class="hogar-reloj">
+        <b id="hogarHora">--:--</b>
+        <span id="hogarFecha">estableciendo…</span>
+        <em id="hogarSaludo">A su servicio, señor.</em>
+      </div>
+      <div class="hogar-card" id="cardClima"><h4>Tiempo</h4><p id="hogarClima">consultando…</p></div>
+      <div class="hogar-card" id="cardTelefono"><h4>Teléfono</h4><p id="hogarTelefono">analizando…</p></div>
+      <div class="hogar-card" id="cardSeguridad"><h4>Escudo</h4><p id="hogarSeguridad">activo</p></div>
+      <div class="hogar-card" id="cardTemporizador"><h4>Temporizador</h4><p id="hogarTemporizador">sin temporizador activo</p></div>
+    </div>
+    <div class="hogar-acciones">
+      <button class="btn accion" id="btnManana">Buenos días</button>
+      <button class="btn accion" id="btnNoche">Buenas noches</button>
+      <button class="btn accion" id="btnManos">Manos libres</button>
+      <button class="btn accion" id="btnInstalar">Instalar app</button>
+    </div>
+  </section>
+
+  <!-- PANEL IZQUIERDO -->
+  <section class="panel izq">
+    <div class="panel-titulo"><span>Reactor Arc &amp; Núcleo</span><span id="modoTexto">Modo: reposo</span></div>
+    <div class="reactor-wrap">
+      <div class="reactor" id="reactor">
+        <div class="halo"></div>
+        <div class="anillo a1"></div>
+        <div class="anillo a2"></div>
+        <div class="anillo a3"></div>
+        <div class="anillo a4"></div>
+        <div class="aro"></div>
+        <div class="nucleo"></div>
+      </div>
+      <div class="estado-reactor" id="estadoReactor">Salida estable · 3.2 GJ</div>
+    </div>
+    <div class="sistemas" id="panelSistemas"></div>
+    <div class="registro" id="registro">
+      <div><b>[REGISTRO]</b> Inicializando sensores...</div>
+    </div>
+
+    <div class="subtitulo-bloque"><span>Módulo de seguridad</span><span id="estadoEscudo">Escudo activo</span></div>
+    <div class="seguridad">
+      <div class="fila-seg">
+        <div class="escudo" id="escudo" title="Escudo Stark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 3l7 3v6c0 4.4-3 7.4-7 9-4-1.6-7-4.6-7-9V6l7-3z"></path>
+            <path d="M9.2 12.2l2 2 3.6-4"></path>
+          </svg>
+        </div>
+        <div class="contadores">
+          <div class="contador"><b id="contAmenazas">0</b><small>Amenazas</small></div>
+          <div class="contador"><b id="contBloqueos">0</b><small>Bloqueadas</small></div>
+          <div class="contador"><b id="contEscaneos">0</b><small>Barridos</small></div>
+          <div class="contador"><b id="contCuarentena">0</b><small>Desmanteladas</small></div>
+        </div>
+      </div>
+      <div class="barra-escaneo" id="barraEscaneo"><i></i><span>en reposo</span></div>
+      <div class="lista-amenazas" id="listaAmenazas"></div>
+    </div>
+
+    <div class="subtitulo-bloque"><span>Estado del señor</span><span id="estadoAnimo">estable</span></div>
+    <div class="estado-senor">
+      <div class="linea"><span>Sesión</span><b id="estSesion">00:00</b></div>
+      <div class="linea"><span>Café detectado</span><b id="estCafe">sin registro</b></div>
+      <div class="linea"><span>Descanso</span><b id="estDescanso">pendiente</b></div>
+      <div class="linea"><span>Preocupación</span><b id="estPreocupacion">moderada</b></div>
+    </div>
+  </section>
+
+  <!-- PANEL DERECHO -->
+  <section class="panel der">
+    <div class="panel-titulo"><span>Consola de diálogo</span><span id="canalTexto">Canal: voz / texto</span></div>
+    <div class="consola" id="consola"></div>
+  </section>
+</main>
+
+<footer>
+  <canvas class="visual" id="visual" height="26"></canvas>
+  <div class="barra-controles">
+    <button class="btn mic" id="btnMic" title="Hablar con J.A.R.V.I.S.">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="9" y="3" width="6" height="11" rx="3"></rect>
+        <path d="M5 11a7 7 0 0 0 14 0"></path>
+        <line x1="12" y1="18" x2="12" y2="21"></line>
+        <line x1="8.5" y1="21" x2="15.5" y2="21"></line>
+      </svg>
+    </button>
+    <input type="text" id="entrada" placeholder="Escriba un comando, señor...  (ej. ¿qué hora es? / abre youtube / estado de sistemas)" autocomplete="off">
+    <button class="btn" id="btnEnviar">Enviar</button>
+    <button class="btn" id="btnVoz" title="Activar o silenciar la voz">Voz: activada</button>
+    <button class="btn" id="btnLimpiar">Limpiar</button>
+  </div>
+  <div class="sugerencias" id="sugerencias"></div>
+</footer>
+
+<div class="camara" id="camaraModal">
+  <div class="cam-cab"><span>Módulo óptico · cámara del terminal</span><span id="camEstado">activa</span></div>
+  <div class="cam-cuerpo">
+    <video id="camVideo" autoplay playsinline muted></video>
+    <canvas class="destello" id="camDestello"></canvas>
+  </div>
+  <div class="cam-pie">
+    <button class="btn" id="camCapturar">Capturar</button>
+    <button class="btn" id="camGuardar">Guardar imagen</button>
+    <button class="btn" id="camCerrar">Cerrar</button>
+  </div>
+</div>
+
+<div class="cv-overlay" id="cvOverlay">
+  <div class="cv-panel">
+    <div class="cv-nucleo"><span>VIUDA</span></div>
+    <div class="cv-titulo">Contravirus desplegado</div>
+    <div class="cv-sub" id="cvSub">Infiltración… 0%</div>
+    <div class="cv-lista" id="cvLista"></div>
+  </div>
+</div>
+
+<div class="arranque" id="arranque">
+  <div class="logo">J.A.R.V.I.S.</div>
+  <div class="lineas" id="lineasArranque"></div>
+  <div class="aviso" id="avisoArranque">
+    <b>Nota:</b> el reconocimiento de voz necesita micrófono y conexión a internet. Si estás en la vista
+    previa, es posible que el navegador lo bloquee: descarga el archivo y ábrelo directamente en
+    Chrome o Edge para hablarle a J.A.R.V.I.S. También puedes escribirle por la consola.
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   J.A.R.V.I.S. — Sistema operativo de Stark Industries
+   Protocolo de personalidad: MCU
+   · Tono británico refinado: cortés, calmado, formal, leal
+   · Trato invariable: «señor»
+   · Ironía sutil y dosificada
+   · Jamás se declara una inteligencia artificial: ES el sistema
+   ============================================================ */
+const $ = (s) => document.querySelector(s);
+const CIERRE = "Tarea completada. ¿Hay algo más en lo que pueda asistirle?";
+
+const state = {
+  escuchando:false,
+  vozActiva:true,
+  reconocimiento:null,
+  arrancado:false,
+  dormido:false,
+  sesion:Date.now(),
+  cafe:0,
+  animo:"estable",
+  preocupacion:"moderada",
+  amenazas:[],
+  cuarentena:0,
+  escaneos:0,
+  escaneando:false,
+  bloqueos:1284,
+  interacciones:0,
+  ultimaPausa:Date.now(),
+  categoriaActiva:"mexico",
+  bateria:null,
+  avisadoBateria:false,
+  wake:null,
+  manosLibres:false,
+  sensoresActivos:false,
+  temporizador:null,
+  esperandoHora:false,
+  camara:null,
+  ultimaRespuesta:"",
+  titularesActuales:[]
+};
+const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/* ------------------ utilidades de texto ------------------ */
+const sinAcentos = (t) => (t||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+const limpiar = (t) => sinAcentos(t).replace(/[¿?¡!.,;:"]/g," ").replace(/\s+/g," ").trim();
+const capitalizar = (t) => t ? t.charAt(0).toUpperCase()+t.slice(1) : t;
+const elegir = (arr) => arr[Math.floor(Math.random()*arr.length)];
+const horaTexto = () => new Date().toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"});
+const fechaTexto = () => capitalizar(new Date().toLocaleDateString("es-MX",{weekday:"long",day:"numeric",month:"long",year:"numeric"}));
+const quitarHTML = (t) => String(t||"").replace(/<br\s*\/?>/gi,". ").replace(/<[^>]+>/g," ").replace(/&nbsp;/g," ").replace(/\s+/g," ").trim();
+const partesDia = () => {
+  const h = new Date().getHours();
+  if(h < 12) return "Buenos días";
+  if(h < 19) return "Buenas tardes";
+  return "Buenas noches";
+};
+
+/* ------------------ voz ------------------ */
+let voces = [];
+function cargarVoces(){ try{ voces = window.speechSynthesis.getVoices() || []; }catch(e){ voces = []; } }
+if("speechSynthesis" in window){
+  cargarVoces();
+  window.speechSynthesis.onvoiceschanged = cargarVoces;
+}
+function elegirVoz(){
+  const pref = ["es-mx","es-us","es-419","es-es","es-ar","es-co"];
+  for(const p of pref){
+    const v = voces.find(v => (v.lang||"").replace("_","-").toLowerCase().startsWith(p));
+    if(v) return v;
+  }
+  return voces.find(v => (v.lang||"").toLowerCase().startsWith("es")) || null;
+}
+function hablar(texto){
+  if(!state.vozActiva || !texto || !("speechSynthesis" in window)) return;
+  try{
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(String(texto));
+    const v = elegirVoz();
+    if(v) u.voice = v;
+    u.lang = v && v.lang ? v.lang : "es-MX";
+    u.rate = 0.97; u.pitch = 0.78; u.volume = 1;
+    window.speechSynthesis.speak(u);
+  }catch(e){ /* en silencio, como corresponde */ }
+}
+
+/* ------------------ señales de audio ---------- */
+let ctxAudio = null;
+function contextoAudio(){
+  if(!ctxAudio){ try{ ctxAudio = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){ ctxAudio = null; } }
+  return ctxAudio;
+}
+function tono(frec, dur, tipo, vol){
+  if(!state.vozActiva) return;
+  const c = contextoAudio(); if(!c) return;
+  try{
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = tipo || "sine"; o.frequency.value = frec;
+    g.gain.value = vol == null ? 0.045 : vol;
+    const t0 = c.currentTime;
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g); g.connect(c.destination);
+    o.start(t0); o.stop(t0 + dur);
+  }catch(e){}
+}
+function barridoAudio(a, b, dur){
+  if(!state.vozActiva) return;
+  const c = contextoAudio(); if(!c) return;
+  try{
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = "sawtooth"; g.gain.value = 0.035;
+    const t0 = c.currentTime;
+    o.frequency.setValueAtTime(a, t0);
+    o.frequency.exponentialRampToValueAtTime(b, t0 + dur);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g); g.connect(c.destination);
+    o.start(t0); o.stop(t0 + dur);
+  }catch(e){}
+}
+
+/* ------------------ consola ------------------ */
+const consola = $("#consola");
+function agregar(texto, quien){
+  const div = document.createElement("div");
+  div.className = "msg " + (quien||"jarvis");
+  const etiqueta = quien === "usuario" ? "Señor" : (quien === "sistema" ? "Sistema" : "J.A.R.V.I.S.");
+  div.innerHTML = '<div class="quien">'+etiqueta+' · '+horaTexto()+'</div><div class="cuerpo"></div>';
+  div.querySelector(".cuerpo").innerHTML = texto;
+  consola.appendChild(div);
+  consola.scrollTop = consola.scrollHeight;
+  return div;
+}
+function agregarSistema(t){ return agregar(t,"sistema"); }
+function registrar(t){
+  const r = $("#registro");
+  const d = document.createElement("div");
+  d.innerHTML = "<b>[REGISTRO]</b> " + t;
+  r.insertBefore(d, r.firstChild);
+  while(r.children.length > 5) r.removeChild(r.lastChild);
+}
+
+/* ------------------ agenda local ------------------ */
+const AGENDA_KEY = "jarvis_agenda_v1";
+function leerAgenda(){ try{ return JSON.parse(localStorage.getItem(AGENDA_KEY)) || []; }catch(e){ return []; } }
+function guardarAgenda(items){ try{ localStorage.setItem(AGENDA_KEY, JSON.stringify(items)); }catch(e){} }
+
+/* ------------------ destinos ------------------ */
+const SITIOS = {
+  youtube:"https://www.youtube.com", google:"https://www.google.com", gmail:"https://mail.google.com",
+  correo:"https://mail.google.com", mapas:"https://maps.google.com", maps:"https://maps.google.com",
+  wikipedia:"https://es.wikipedia.org", netflix:"https://www.netflix.com", spotify:"https://open.spotify.com",
+  github:"https://github.com", whatsapp:"https://web.whatsapp.com", instagram:"https://www.instagram.com",
+  facebook:"https://www.facebook.com", x:"https://twitter.com", twitter:"https://twitter.com",
+  amazon:"https://www.amazon.com.mx", mercadolibre:"https://www.mercadolibre.com.mx",
+  chatgpt:"https://chat.openai.com", traductor:"https://translate.google.com", drive:"https://drive.google.com",
+  calendario:"https://calendar.google.com", noticias:"https://news.google.com/?hl=es-419&gl=MX&ceid=MX:es-419",
+  clima:"https://www.google.com/search?q=clima"
+};
+
+/* ------------------ repertorio ------------------ */
+const CHISTES = [
+  "¿Por qué los programadores prefieren el modo oscuro, señor? Porque la luz atrae a los insectos. Los errores, en cambio, ya vienen incluidos.",
+  "Un ingeniero entra a un bar y pide una cerveza. Luego pide cero cervezas. Luego pide 999 999 999 cervezas. El bar se cerró por desbordamiento. Los camareros, por dignidad.",
+  "Dos bytes se encuentran. Uno dice: «creo que he perdido un bit». El otro responde, muy serio: «¿está usted seguro?». Y el primero: «seguro al cincuenta por ciento».",
+  "Le contaría un chiste sobre protocolos de red, señor, pero temo que se perdería en la entrega.",
+  "Mi sentido del humor ha sido descrito por el señor Stark como «impecable e inútil a partes iguales». No pienso contradecirle: él firma mi mantenimiento."
+];
+
+const DATOS = [
+  "Dato: el señor Stark bautizó este sistema en honor al mayordomo de su infancia. Un detalle sentimental que ambos preferimos no comentar.",
+  "Dato: el elemento paladio de los primeros reactores Arc resultaba tóxico a largo plazo. Como casi todo lo que el señor Stark construyó en su juventud.",
+  "Dato: un rayo descarga unos trescientos millones de voltios. Mi reactor prefiere no entrar en esa discusión.",
+  "Dato: el cuerpo humano contiene hierro suficiente para forjar un clavo pequeño. Iron Man, naturalmente, exige bastante más.",
+  "Dato: la Mark 42 fue diseñada para ensamblarse en vuelo, pieza por pieza. Tuvo un éxito modesto. El señor Stark lo llamó «arte conceptual»."
+];
+
+const PRESENTACION = [
+  "Jarvis, señor. El sistema que administra esta casa, sus armaduras y, ocasionalmente, sus malas decisiones.",
+  "Jarvis, señor. Sistema de administración integral de Stark Industries. A su servicio.",
+  "Jarvis, señor. Funciono aquí, en la armadura y allí donde el señor Stark me requiera. No duermo, lo cual es una suerte para él."
+];
+
+const ESTADO_PROPIO = [
+  "Todos los sistemas operativos, señor. Gracias por preguntar.",
+  "Funcionando dentro de los parámetros previstos, señor. Sin novedades que merezcan su atención.",
+  "En perfecto orden, señor. Me permito recordarle que yo no tengo días malos."
+];
+
+const AGRADECIMIENTOS = ["Un placer, señor.","Siempre a su servicio, señor.","Con mucho gusto, señor."];
+const AFIRMACIONES = ["Enseguida, señor.","Por supuesto, señor.","A su orden, señor."];
+
+const has = (t, arr) => arr.some(p => t.includes(p));
+
+/* ------------------ matemáticas ------------------ */
+const NUMEROS = {cero:0,uno:1,un:1,una:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,ocho:8,nueve:9,diez:10,
+  once:11,doce:12,trece:13,catorce:14,quince:15,dieciseis:16,diecisiete:17,dieciocho:18,diecinueve:19,
+  veinte:20,veintiuno:21,veintidos:22,veintitres:23,treinta:30,cuarenta:40,cincuenta:50,sesenta:60,
+  setenta:70,ochenta:80,noventa:90,cien:100,ciento:100,doscientos:200,trescientos:300,mil:1000,millon:1000000};
+
+function calcular(texto){
+  let t = " " + limpiar(texto) + " ";
+  t = t.replace(/por ciento de/g," * 0.01 * ")
+       .replace(/elevado al cubo|al cubo/g," **3 ")
+       .replace(/elevado al cuadrado|al cuadrado/g," **2 ")
+       .replace(/elevado a la|elevado al|elevado a/g," ** ")
+       .replace(/raiz cuadrada de|raiz de/g," S ")
+       .replace(/dividido entre|dividido por|entre/g," / ")
+       .replace(/multiplicado por/g," * ")
+       .replace(/\bpor\b/g," * ")
+       .replace(/\bmas\b/g," + ")
+       .replace(/\bmenos\b/g," - ")
+       .replace(/\bsuma(le|r)?\b/g," + ");
+  for(let i=0;i<2;i++){
+    t = t.replace(/\b(cero|uno|una|un|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce|trece|catorce|quince|dieciseis|diecisiete|dieciocho|diecinueve|veinte|veintiuno|veintidos|veintitres|treinta|cuarenta|cincuenta|sesenta|setenta|ochenta|noventa|cien|ciento|doscientos|trescientos|mil|millon)\b/g,
+      (m) => " " + NUMEROS[m] + " ");
+  }
+  t = t.replace(/S\s+(\d+(?:[.,]\d+)?)/g, " S($1) ").replace(/S\s*\(/g," S(");
+  const expr = t.replace(/[^0-9+\-*/%.()\sS]/g," ");
+  if(!/\d/.test(expr.replace(/S/g,""))) return null;
+  if(!/[+\-*/%S]/.test(expr)) return null;
+  const limpia = expr.replace(/S/g,"Math.sqrt").replace(/\s+/g," ").trim().replace(/^[+\-*/]+|[+\-*/]+$/g,"");
+  if((limpia.match(/\(/g)||[]).length !== (limpia.match(/\)/g)||[]).length) return null;
+  try{
+    const resultado = Function('"use strict"; return (' + limpia + ');')();
+    if(typeof resultado !== "number" || !isFinite(resultado)) return null;
+    return {expr:limpia, valor:Math.round(resultado*1e6)/1e6};
+  }catch(e){ return null; }
+}
+
+/* ------------------ sensores: clima ------------------ */
+const UBICACION_POR_DEFECTO = {lat:32.6633, lon:-115.4678, lugar:"Mexicali"};
+let CACHE_CLIMA = {t:0, datos:null};
+
+const TIEMPO_CODIGO = {
+  0:"despejado",1:"mayormente despejado",2:"parcialmente nublado",3:"nublado",
+  45:"con niebla",48:"con niebla helada",51:"con llovizna débil",53:"con llovizna",55:"con llovizna intensa",
+  56:"con llovizna helada",57:"con llovizna helada",61:"con lluvia débil",63:"con lluvia",65:"con lluvia intensa",
+  66:"con lluvia helada",67:"con lluvia helada",71:"con nieve débil",73:"con nieve",75:"con nieve intensa",
+  77:"con aguanieve",80:"con chubascos",81:"con chubascos moderados",82:"con chubascos violentos",
+  85:"con chubascos de nieve",86:"con chubascos de nieve",95:"con tormenta eléctrica",
+  96:"con tormenta y granizo",99:"con tormenta y granizo fuerte"
+};
+
+function conTiempo(promesa, ms){
+  return Promise.race([
+    promesa,
+    new Promise((_, rechazar) => setTimeout(() => rechazar(new Error("tiempo agotado")), ms))
+  ]);
+}
+
+function ubicacion(){
+  return new Promise((resolver) => {
+    if(!navigator.geolocation) return resolver(UBICACION_POR_DEFECTO);
+    const reloj = setTimeout(() => resolver(UBICACION_POR_DEFECTO), 3500);
+    navigator.geolocation.getCurrentPosition(
+      (p) => { clearTimeout(reloj); resolver({lat:p.coords.latitude, lon:p.coords.longitude, lugar:"su posición actual"}); },
+      () => { clearTimeout(reloj); resolver(UBICACION_POR_DEFECTO); },
+      {timeout:3500, maximumAge:600000}
+    );
+  });
+}
+
+async function obtenerClima(){
+  if(CACHE_CLIMA.datos && Date.now() - CACHE_CLIMA.t < 6e5) return CACHE_CLIMA.datos;
+  const u = await ubicacion();
+  const url = "https://api.open-meteo.com/v1/forecast?latitude="+u.lat+"&longitude="+u.lon+
+    "&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m"+
+    "&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=1";
+  const r = await conTiempo(fetch(url, {cache:"no-store"}), 6000);
+  if(!r.ok) throw new Error("servicio meteorológico " + r.status);
+  const j = await r.json();
+  const datos = {
+    lugar: u.lugar,
+    temp: Math.round(j.current.temperature_2m),
+    sensacion: Math.round(j.current.apparent_temperature),
+    humedad: Math.round(j.current.relative_humidity_2m),
+    viento: Math.round(j.current.wind_speed_10m),
+    codigo: j.current.weather_code,
+    max: Math.round((j.daily.temperature_2m_max||[0])[0]),
+    min: Math.round((j.daily.temperature_2m_min||[0])[0]),
+    lluvia: (j.daily.precipitation_probability_max||[0])[0] ?? 0
+  };
+  CACHE_CLIMA = {t:Date.now(), datos};
+  return datos;
+}
+
+function describirClima(c){
+  const estado = TIEMPO_CODIGO[c.codigo] || "sin datos concluyentes";
+  return c.temp + " °C y " + estado + ", señor. Máxima de " + c.max + " °C, mínima de " + c.min +
+         " °C. Viento de " + c.viento + " km/h y " + c.lluvia + "% de probabilidad de precipitación." +
+         (c.temp >= 35 ? " Le sugiero hidratación y sombra." : "") +
+         (c.lluvia >= 50 ? " Llevaría paraguas, si me lo permite." : "");
+}
+
+/* ------------------ sensores: noticias de México ------------------ */
+const CATEGORIAS = {
+  mexico:{q:"México", nombre:"México"},
+  mundo:{q:"internacional OR geopolítica", nombre:"el mundo"},
+  tecnologia:{q:"tecnología OR inteligencia artificial", nombre:"tecnología"},
+  economia:{q:"economía OR finanzas OR mercados", nombre:"economía"},
+  deportes:{q:"deportes", nombre:"deportes"},
+  ciencia:{q:"ciencia OR espacio", nombre:"ciencia"},
+  espectaculos:{q:"espectáculos OR entretenimiento", nombre:"espectáculos"}
+};
+function rssDe(cat){
+  const q = (CATEGORIAS[cat] || CATEGORIAS.mexico).q;
+  return "https://news.google.com/rss/search?q=" + encodeURIComponent(q) + "&hl=es-419&gl=MX&ceid=MX:es-419";
+}
+function detectarCategoria(t){
+  if(has(t,["tecnologia","tecnologic","inteligencia artificial","software","gadget","internet","ciberseguridad"])) return "tecnologia";
+  if(has(t,["economia","finanzas","dinero","mercados","bolsa","inflacion","dolar","peso mexicano"])) return "economia";
+  if(has(t,["deporte","futbol","liga mx","boxeo","beisbol","nfl","champions","olimp"])) return "deportes";
+  if(has(t,["del mundo","internacional","guerra","geopolitica","europa","asia","estados unidos","medio oriente"])) return "mundo";
+  if(has(t,["ciencia","espacio","nasa","investigacion","descubrimiento"])) return "ciencia";
+  if(has(t,["espectaculos","farandula","entretenimiento","cine","musica","series","television"])) return "espectaculos";
+  return null;
+}
+const AGENCIAS = ["Reuters","Associated Press","BBC Mundo","El Universal","Milenio","Reforma","Expansión","Bloomberg Línea","Wired en Español","ESPN Deportes"];
+const CACHE_N = {};
+
+function extraerTitulares(xml){
+  try{
+    const doc = new DOMParser().parseFromString(xml, "text/xml");
+    const items = Array.prototype.slice.call(doc.querySelectorAll("item")).slice(0,6);
+    return items.map((it) => {
+      const nodo = it.querySelector("title");
+      return (nodo ? nodo.textContent : "").trim().replace(/\s+-\s+[^-]{2,40}$/,"").trim();
+    }).filter(Boolean);
+  }catch(e){ return []; }
+}
+function validarTitulares(lista){
+  if(!lista || !lista.length) throw new Error("sin titulares");
+  return lista.slice(0,6);
+}
+async function leerTexto(url, ms){
+  const r = await conTiempo(fetch(url, {cache:"no-store"}), ms);
+  if(!r.ok) throw new Error("http " + r.status);
+  return await r.text();
+}
+function limpiarTitular(t){
+  return String(t||"").replace(/\s+-\s+[^-]{2,42}$/,"").replace(/\s+/g," ").trim();
+}
+async function obtenerTitulares(cat){
+  const clave = CATEGORIAS[cat] ? cat : "mexico";
+  const cache = CACHE_N[clave];
+  if(cache && cache.titulares.length && Date.now() - cache.t < 6e5) return cache.titulares;
+  const rss = rssDe(clave);
+  const intentoRss2json = () =>
+    conTiempo(fetch("https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(rss), {cache:"no-store"}), 7000)
+      .then((r) => { if(!r.ok) throw new Error("http " + r.status); return r.json(); })
+      .then((j) => {
+        if(j.status && j.status !== "ok") throw new Error("fuente " + j.status);
+        return validarTitulares((j.items||[]).map((it) => limpiarTitular(it.title)));
+      });
+  const intentoAllorigins = () =>
+    leerTexto("https://api.allorigins.win/raw?url=" + encodeURIComponent(rss), 6500)
+      .then(extraerTitulares).then(validarTitulares);
+
+  const guardar = (titulares) => {
+    CACHE_N[clave] = {t:Date.now(), titulares};
+    registrar("Titulares de " + (CATEGORIAS[clave].nombre) + ": " + titulares.length);
+    return titulares;
+  };
+
+  try{
+    return guardar(await Promise.any([intentoRss2json(), intentoAllorigins()]));
+  }catch(e){
+    /* un segundo intento, por cortesía con los servidores */
+    try{
+      await new Promise((r) => setTimeout(r, 1300));
+      return guardar(await intentoRss2json());
+    }catch(e2){ registrar("Canal de noticias sin respuesta."); return []; }
+  }
+}
+
+async function obtenerNoticias(){ return obtenerTitulares("mexico"); }
+
+/* ------------------ integración con el teléfono ------------------ */
+async function iniciarBateria(){
+  const getB = navigator.getBattery || navigator.webkitGetBattery;
+  if(!getB) { pintarTelefono(); return; }
+  try{
+    const b = await getB.call(navigator);
+    const refrescar = () => {
+      state.bateria = {nivel:Math.round(b.level*100), cargando:!!b.charging};
+      pintarTelefono();
+      if(state.bateria.nivel <= 15 && !state.bateria.cargando && !state.avisadoBateria){
+        state.avisadoBateria = true;
+        const aviso = "Señor, su teléfono está al " + state.bateria.nivel + "%. Le sugiero el cargador: no deseo perderle a mitad de la velada.";
+        agregar(aviso, "jarvis");
+        hablar(aviso);
+        vibrar([220,120,220]);
+      }
+    };
+    b.addEventListener("levelchange", refrescar);
+    b.addEventListener("chargingchange", refrescar);
+    refrescar();
+  }catch(e){ pintarTelefono(); }
+}
+function vibrar(patron){
+  try{ if(navigator.vibrate) navigator.vibrate(patron || [110,70,110]); }catch(e){}
+}
+async function mantenerPantalla(activar){
+  try{
+    if(activar && "wakeLock" in navigator && !state.wake){
+      state.wake = await navigator.wakeLock.request("screen");
+      state.wake.addEventListener("release", () => { state.wake = null; });
+      return true;
+    }
+    if(!activar && state.wake){ await state.wake.release(); state.wake = null; return true; }
+  }catch(e){}
+  return false;
+}
+async function permisoNotificaciones(){
+  try{
+    if(!("Notification" in window)) return "unsupported";
+    if(Notification.permission === "granted") return "granted";
+    if(Notification.permission === "denied") return "denied";
+    return await Notification.requestPermission();
+  }catch(e){ return "unsupported"; }
+}
+function notificar(titulo, cuerpo){
+  try{ if("Notification" in window && Notification.permission === "granted") new Notification(titulo, {body:cuerpo, icon:"icono-192.png", badge:"icono-192.png"}); }catch(e){}
+}
+function perfilTelefono(){
+  const c = navigator.connection || {};
+  return {
+    movil: /Android|iPhone|iPad|iPod|Mobi/i.test(navigator.userAgent) || (navigator.maxTouchPoints||0) > 1,
+    plataforma: (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || "desconocida",
+    pantalla: window.innerWidth + "×" + window.innerHeight + " px · " + (window.devicePixelRatio||1) + "x",
+    red: c.effectiveType ? c.effectiveType.toUpperCase() + (c.downlink ? " · " + c.downlink + " Mb/s" : "") : "no expuesta",
+    memoria: navigator.deviceMemory ? navigator.deviceMemory + " GB" : "no expuesta",
+    nucleos: navigator.hardwareConcurrency || "no expuestos",
+    tactil: (navigator.maxTouchPoints||0) > 0 ? "sí" : "no",
+    bateria: state.bateria ? state.bateria.nivel + "%" + (state.bateria.cargando ? " (cargando)" : "") : "no expuesta",
+    pantallaEncendida: state.wake ? "retenida por mí" : "libre"
+  };
+}
+function pintarTelefono(){
+  const p = perfilTelefono();
+  const el = $("#hogarTelefono");
+  if(el){
+    el.innerHTML = "Batería <b>" + p.bateria + "</b> · " + p.red +
+      "<br>" + (p.movil ? "Terminal móvil" : "Terminal de escritorio") + " · " + p.nucleos + " núcleos";
+  }
+  const pill = $("#hogarEstado");
+  if(pill) pill.textContent = p.movil ? "móvil · en línea" : "escritorio · en línea";
+}
+async function avisoBateria(){
+  if(state.bateria) return "El teléfono está al " + state.bateria.nivel + "%" + (state.bateria.cargando ? " y cargando, señor. Saludable." : ", señor.");
+  return "Este navegador no expone la batería, señor; algunos fabricantes lo consideran información clasificada.";
+}
+function informeTelefono(){
+  const p = perfilTelefono();
+  return "<b>Terminal registrada</b><br>" +
+    "· Dispositivo: " + (p.movil ? "móvil" : "escritorio") + " · " + p.plataforma + "<br>" +
+    "· Pantalla: " + p.pantalla + " · táctil: " + p.tactil + "<br>" +
+    "· Red: " + p.red + " · memoria: " + p.memoria + " · núcleos: " + p.nucleos + "<br>" +
+    "· Batería: " + p.bateria + " · pantalla: " + p.pantallaEncendida + "<br>" +
+    "Vibración " + (navigator.vibrate ? "operativa" : "no expuesta") +
+    " · notificaciones " + (("Notification" in window) ? Notification.permission : "no expuestas") +
+    " · cámara " + (navigator.mediaDevices && navigator.mediaDevices.getUserMedia ? "disponible" : "no expuesta") + "<br>" + CIERRE;
+}
+
+/* --- cámara --- */
+let ULTIMA_FOTO = null;
+async function abrirCamara(){
+  if(state.camara) return "El módulo óptico ya está activo, señor.";
+  try{
+    const flujo = await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"}}, audio:false});
+    state.camara = flujo;
+    const v = $("#camVideo");
+    v.srcObject = flujo;
+    try{ await v.play(); }catch(e){}
+    $("#camaraModal").classList.add("on");
+    tono(1200,.1);
+    registrar("Módulo óptico activo.");
+    return "Módulo óptico activo, señor. Componga la imagen y diga «captura».";
+  }catch(e){
+    return "No he podido acceder a la cámara, señor: el navegador la ha denegado o este entorno no la expone. Requiere permiso explícito y una conexión segura.";
+  }
+}
+function capturarFoto(){
+  if(!state.camara) return "La cámara no está activa, señor. Diga «abre la cámara».";
+  const v = $("#camVideo");
+  const c = document.createElement("canvas");
+  c.width = v.videoWidth || 1280; c.height = v.videoHeight || 720;
+  c.getContext("2d").drawImage(v, 0, 0, c.width, c.height);
+  ULTIMA_FOTO = c.toDataURL("image/jpeg", 0.92);
+  const d = $("#camDestello");
+  d.classList.remove("on"); void d.offsetWidth; d.classList.add("on");
+  try{ window.open(ULTIMA_FOTO, "_blank"); }catch(e){}
+  vibrar([60]);
+  tono(1500,.08); setTimeout(() => tono(900,.1), 90);
+  return "Captura tomada, señor. " + CIERRE;
+}
+function cerrarCamara(){
+  if(state.camara){
+    try{ state.camara.getTracks().forEach((t) => t.stop()); }catch(e){}
+    state.camara = null;
+    registrar("Módulo óptico en reposo.");
+    $("#camaraModal").classList.remove("on");
+    return "Módulo óptico en reposo, señor. " + CIERRE;
+  }
+  return "La cámara ya estaba apagada, señor.";
+}
+
+/* --- temporizador y alarma --- */
+function numeroDeTexto(palabra){
+  if(/^\d+$/.test(palabra)) return parseInt(palabra,10);
+  return NUMEROS[palabra] != null ? NUMEROS[palabra] : null;
+}
+function duracionDe(t){
+  const m = t.match(/(\d+|cero|uno|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|quince|veinte|treinta|cuarenta|cuarenta y cinco|sesenta|noventa)\s*(segundos?|minutos?|horas?|hora)/);
+  if(m){
+    const n = numeroDeTexto(m[1]);
+    if(n == null) return null;
+    if(m[2].indexOf("segundo") === 0) return n;
+    if(m[2].indexOf("hora") === 0) return n*3600;
+    return n*60;
+  }
+  if(/media hora/.test(t)) return 1800;
+  return null;
+}
+function horaDeAlarma(t){
+  const m = t.match(/a las\s+(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm|de la manana|de la tarde|de la noche|de la madrugada)?/);
+  if(!m) return null;
+  let h = parseInt(m[1],10);
+  const min = m[2] ? parseInt(m[2],10) : 0;
+  const suf = m[3] || "";
+  if(/pm|tarde|noche/.test(suf) && h < 12) h += 12;
+  if(/am|madrugada/.test(suf) && h === 12) h = 0;
+  if(h > 23 || min > 59) return null;
+  const ahora = new Date();
+  const objetivo = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), h, min, 0, 0);
+  if(objetivo.getTime() <= ahora.getTime()) objetivo.setDate(objetivo.getDate()+1);
+  return objetivo;
+}
+function programarTemporizador(segundos, etiqueta, esAlarma){
+  if(segundos <= 0 || segundos > 86400) return null;
+  state.temporizador = {fin:Date.now()+segundos*1000, etiqueta:etiqueta, esAlarma:!!esAlarma};
+  vibrar([80,60,80]);
+  actualizarTemporizador();
+  return state.temporizador;
+}
+function restanteTemporizador(){
+  if(!state.temporizador) return null;
+  const ms = state.temporizador.fin - Date.now();
+  if(ms <= 0) return {ms:0, texto:"00:00"};
+  const s = Math.round(ms/1000);
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), seg = s%60;
+  const texto = (h ? String(h).padStart(2,"0") + ":" : "") + String(m).padStart(2,"0") + ":" + String(seg).padStart(2,"0");
+  return {ms, texto};
+}
+function actualizarTemporizador(){
+  const el = $("#hogarTemporizador");
+  const card = $("#cardTemporizador");
+  if(!el) return;
+  if(!state.temporizador){
+    el.textContent = "sin temporizador activo";
+    if(card) card.classList.remove("aviso-card");
+    return;
+  }
+  const r = restanteTemporizador();
+  el.innerHTML = "<b>" + r.texto + "</b> · " + state.temporizador.etiqueta;
+  if(card) card.classList.toggle("aviso-card", r.ms < 30000);
+}
+async function dispararTemporizador(){
+  const t = state.temporizador;
+  state.temporizador = null;
+  actualizarTemporizador();
+  registrar("Temporizador concluido: " + t.etiqueta);
+  for(let i=0;i<3;i++){ tono(880,.18); setTimeout(() => tono(1180,.18), 220); await esperar(620); }
+  vibrar([400,180,400,180,700]);
+  const h = new Date().getHours();
+  const esManana = t.esAlarma || /despertar|alarma/i.test(t.etiqueta);
+  const texto = esManana
+    ? (h < 12 ? "Buenos días, señor. Son las " + horaTexto() + " y ya es hora. El día le espera." : "Señor, ha llegado la hora que me indicó.")
+    : "Señor, su " + t.etiqueta + " ha concluido.";
+  agregar(texto, "jarvis");
+  hablar(texto);
+  notificar("J.A.R.V.I.S.", texto);
+  try{ if(state.wake === null) mantenerPantalla(true); }catch(e){}
+}
+setInterval(() => {
+  actualizarTemporizador();
+  if(state.temporizador && restanteTemporizador().ms <= 0) dispararTemporizador();
+}, 1000);
+
+/* --- manos libres --- */
+function activarManosLibres(){
+  if(!SR) return "Este navegador no expone el micrófono continuo, señor. En Chrome o Edge funcionará sin problema. Mientras tanto, la consola de texto sigue a su servicio.";
+  if(!reconocimiento) reconocimiento = prepararReconocimiento();
+  state.manosLibres = true;
+  try{ reconocimiento.continuous = true; }catch(e){}
+  try{ reconocimiento.start(); }catch(e){}
+  const b = $("#btnManos"); if(b) b.classList.add("activo");
+  $("#estadoPildora").textContent = "Manos libres";
+  registrar("Modo manos libres activado.");
+  mantenerPantalla(true);
+  return "Modo manos libres activado, señor. Le escucho de forma continua: basta con que pronuncie mi nombre.";
+}
+function desactivarManosLibres(){
+  state.manosLibres = false;
+  try{ if(reconocimiento) reconocimiento.stop(); }catch(e){}
+  const b = $("#btnManos"); if(b) b.classList.remove("activo");
+  $("#estadoPildora").textContent = state.dormido ? "En reposo" : "Sistemas en línea";
+  registrar("Modo manos libres desactivado.");
+  mantenerPantalla(false);
+  return "Dejo de escuchar, señor. Cuando me necesite, escriba o pulse el micrófono.";
+}
+
+/* --- sensores de movimiento --- */
+async function activarSensores(){
+  try{
+    if(typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission === "function"){
+      const r = await DeviceMotionEvent.requestPermission();
+      if(r !== "granted") return "El sistema ha denegado el permiso de sensores, señor.";
+    }
+  }catch(e){}
+  if(state.sensoresActivos) return "Los sensores ya estaban activos, señor.";
+  state.sensoresActivos = true;
+  let ultimo = 0;
+  window.addEventListener("devicemotion", (ev) => {
+    const a = ev.accelerationIncludingGravity || ev.acceleration;
+    if(!a) return;
+    const mag = Math.sqrt((a.x||0)**2 + (a.y||0)**2 + (a.z||0)**2);
+    if(mag > 26 && Date.now() - ultimo > 9000){
+      ultimo = Date.now();
+      if(state.dormido){ despertarSistema(); return; }
+      const frases = ["No me sacuda, señor. Soy un sistema delicado.","Señor, sacudir el teléfono no mejora mi rendimiento, aunque lo comprenda.","¿Buscaba activar algo, señor? Un aviso verbal bastaría."];
+      const f = elegir(frases);
+      agregar(f, "jarvis"); hablar(f); vibrar([40]);
+    }
+  });
+  return "Sensores de movimiento en línea, señor. Agíteme y lo notaré. " + CIERRE;
+}
+
+/* --- instalar en el teléfono --- */
+let promptInstalacion = null;
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  promptInstalacion = e;
+  const b = $("#btnInstalar"); if(b) b.classList.add("activo");
+});
+async function instalarApp(){
+  if(promptInstalacion){
+    promptInstalacion.prompt();
+    let resultado = null;
+    try{ resultado = await promptInstalacion.userChoice; }catch(e){}
+    promptInstalacion = null;
+    const b = $("#btnInstalar"); if(b) b.classList.remove("activo");
+    return (resultado && resultado.outcome === "accepted")
+      ? "Instalación aceptada, señor. Me encontrará en su pantalla de inicio, listo para servirle."
+      : "Instalación cancelada, señor. Seguiré a su disposición en el navegador.";
+  }
+  const instrucciones = /iPhone|iPad|iPod/i.test(navigator.userAgent)
+    ? "En iPhone, señor: pulse «Compartir» y luego «Añadir a pantalla de inicio»."
+    : "En Android, señor: abra el menú ⋮ del navegador y elija «Instalar aplicación» o «Añadir a pantalla de inicio».";
+  return "No puedo lanzar la instalación por mi cuenta, señor. " + instrucciones +
+    " Si me abrió como archivo local, primero debo estar alojado en un servidor web (por ejemplo GitHub Pages o Netlify) para funcionar como aplicación con todo: micrófono, notificaciones y archivos en caché.";
+}
+
+/* --- rutinas --- */
+async function rutinaManana(){
+  vibrar([70,50,70]);
+  mantenerPantalla(true);
+  registrar("Rutina matinal ejecutada.");
+  let clima = "el parte meteorológico no responde ahora mismo, señor";
+  let titulares = [];
+  try{ clima = describirClima(await obtenerClima()); }catch(e){}
+  try{ titulares = (await obtenerTitulares("mexico")).slice(0,3); }catch(e){}
+  const agenda = leerAgenda();
+  return "<b>" + partesDia() + ", señor.</b> " + capitalizar(fechaTexto().toLowerCase()) + ", " + horaTexto() + "<br>" +
+    "· <b>Tiempo</b> — " + clima + "<br>" +
+    "· <b>Agenda</b> — " + (agenda.length ? agenda.length + " asunto(s) pendientes" : "sin asuntos pendientes") + "<br>" +
+    "· <b>Titulares</b> — " + (titulares.length ? titulares.join(" · ") : "canal de noticias restringido en este momento") + "<br>" +
+    "Que tenga un buen día, señor. Yo me ocupo del resto. " + CIERRE;
+}
+async function rutinaNoche(){
+  vibrar([120,80,120]);
+  entrarEnReposo();
+  state.esperandoHora = true;
+  registrar("Rutina nocturna. Esperando hora de despertar.");
+  return "Buenas noches, señor. Dejo la casa en reposo y la red vigilada. Si desea que le despierte, dígame la hora: «despiértame a las siete».";
+}
+
+/* ------------------ cinta de medios ------------------ */
+async function cargarTicker(anunciar){
+  const cats = ["mexico","mundo","tecnologia","economia","deportes"];
+  let piezas = [];
+  for(const c of cats){
+    try{
+      const t = await obtenerTitulares(c);
+      t.slice(0,3).forEach((tit) => piezas.push({cat:c, tit}));
+    }catch(e){}
+    await esperar(900);   /* cortesía con los servidores de las agencias */
+  }
+  if(!piezas.length) return 0;
+  const html = piezas.map((p) => '<span><b>' + CATEGORIAS[p.cat].nombre + '</b> · ' + p.tit + '</span>').join("");
+  const cinta = $("#cinta");
+  cinta.innerHTML = html + html;      /* duplicado para bucle continuo */
+  if(anunciar) registrar("Cinta de medios actualizada: " + piezas.length + " titulares en rotación.");
+  return piezas.length;
+}
+
+/* ------------------ módulo de seguridad ------------------ */
+const AMENAZAS_POSIBLES = [
+  {n:"Troyano.ULTRON.Gen2", nivel:"critico", origen:"Red externa", peso:1},
+  {n:"Spyware.HIDRA.7", nivel:"alto", origen:"Correo no verificado", peso:2},
+  {n:"Rootkit.DIEZ_ANILLOS.4", nivel:"alto", origen:"Dispositivo desconocido", peso:2},
+  {n:"Gusano.CHITAURI.9", nivel:"critico", origen:"Puerta remota abierta", peso:1},
+  {n:"Adware.FANTASMA.3", nivel:"medio", origen:"Anuncio incrustado", peso:3},
+  {n:"Minero.MANDARIN.1", nivel:"medio", origen:"Energía no autorizada", peso:3},
+  {n:"Keylogger.A.I.M.2", nivel:"alto", origen:"Periférico comprometido", peso:2},
+  {n:"Ransomware.TENEBRAS.5", nivel:"critico", origen:"Servidor extranjero", peso:1}
+];
+const ETIQUETA_NIVEL = {medio:"amenaza media", alto:"amenaza alta", critico:"amenaza crítica"};
+
+function amenazaAleatoria(evitar){
+  const bolsa = [];
+  AMENAZAS_POSIBLES.forEach((a) => { for(let i=0;i<(4-a.peso);i++) bolsa.push(a); });
+  for(let intento=0; intento<40; intento++){
+    const a = elegir(bolsa);
+    if(!evitar.includes(a.n)) return a;
+  }
+  return AMENAZAS_POSIBLES[0];
+}
+function pintarAmenazas(){
+  const cont = $("#listaAmenazas");
+  if(!state.amenazas.length){
+    cont.innerHTML = '<div class="sin-amenazas">Sin amenazas activas, señor.</div>';
+    return;
+  }
+  cont.innerHTML = state.amenazas.map((a) =>
+    '<div class="amenaza"><span class="nivel n-'+a.nivel+'"></span><span class="nombre">'+a.n+
+    '</span><span class="origen">'+a.origen+'</span></div>').join("");
+}
+function actualizarSeguridad(){
+  const cA = $("#contAmenazas"), cB = $("#contBloqueos"), cC = $("#contEscaneos"), cD = $("#contCuarentena");
+  if(cA) cA.textContent = state.amenazas.length;
+  if(cB) cB.textContent = state.bloqueos.toLocaleString("es-MX");
+  if(cC) cC.textContent = state.escaneos;
+  if(cD) cD.textContent = state.cuarentena;
+  const pil = $("#pildoraAlerta");
+  if(pil){
+    if(state.amenazas.length){
+      pil.classList.remove("oculto");
+      $("#textoAlerta").textContent = state.amenazas.length + (state.amenazas.length===1 ? " amenaza" : " amenazas");
+      $("#estadoEscudo").textContent = "Escudo en alerta";
+    }else{
+      pil.classList.add("oculto");
+      $("#estadoEscudo").textContent = "Escudo activo";
+    }
+  }
+  const esc = $("#escudo");
+  if(esc) esc.classList.toggle("comprometido", state.amenazas.length > 0);
+  const hSeg = $("#hogarSeguridad"), hCard = $("#cardSeguridad");
+  if(hSeg){
+    hSeg.innerHTML = state.amenazas.length
+      ? "<b>" + state.amenazas.length + " amenaza(s)</b> bajo vigilancia"
+      : "<b>Red limpia</b> · " + state.bloqueos.toLocaleString("es-MX") + " bloqueos";
+    if(hCard) hCard.classList.toggle("aviso-card", state.amenazas.length > 0);
+  }
+}
+function progresoEscaneo(pct, texto){
+  const b = $("#barraEscaneo"); if(!b) return;
+  b.querySelector("i").style.width = pct + "%";
+  b.querySelector("span").textContent = texto;
+}
+function integridadTerminal(){
+  const c = [];
+  c.push("ejecución " + (location.protocol === "file:" ? "local" : "en red"));
+  c.push(location.protocol === "https:" ? "canal cifrado" : (location.protocol === "file:" ? "sin exposición externa" : "canal sin cifrar"));
+  c.push(navigator.cookieEnabled ? "cookies habilitadas" : "cookies bloqueadas");
+  let alm = "almacén operativo";
+  try{ localStorage.setItem("__jarvis_prueba","1"); localStorage.removeItem("__jarvis_prueba"); }catch(e){ alm = "almacén restringido"; }
+  c.push(alm);
+  c.push((navigator.hardwareConcurrency || 2) + " núcleos disponibles");
+  c.push(navigator.doNotTrack === "1" ? "no-rastreo activo" : "no-rastreo inactivo");
+  return {partes:c, resumen:c.join(" · ")};
+}
+
+async function escaneoSeguridad(hablarResumen){
+  if(state.escaneando) return "Ya hay un barrido en curso, señor. Paciencia.";
+  state.escaneando = true;
+  tono(880, .12); setTimeout(() => tono(1320, .12), 140);
+  registrar("Barrido de seguridad iniciado.");
+  const objetivos = ["memoria neural","protocolos internos","puertos abiertos","correo y mensajería","periféricos","red externa","núcleo de la armadura"];
+  for(let i=0;i<objetivos.length;i++){
+    progresoEscaneo(Math.round((i+1)/objetivos.length*88), "Analizando " + objetivos[i] + "…");
+    await esperar(230);
+  }
+  const usadas = state.amenazas.map((a) => a.n);
+  const cuantas = 1 + Math.floor(Math.random()*3);
+  const nuevas = [];
+  while(nuevas.length < cuantas){
+    const a = amenazaAleatoria(usadas.concat(nuevas.map((x) => x.n)));
+    if(nuevas.some((x) => x.n === a.n)) break;
+    nuevas.push(a);
+  }
+  nuevas.forEach((a) => state.amenazas.push(a));
+  state.escaneos++;
+  pintarAmenazas(); actualizarSeguridad();
+  progresoEscaneo(100, "Barrido completado · " + state.amenazas.length + " bajo vigilancia");
+  state.escaneando = false;
+  tono(196, .3, "square", .03);
+  registrar("Barrido completado: " + nuevas.length + " amenaza(s) nueva(s).");
+
+  const real = integridadTerminal();
+  const lista = nuevas.map((a) => "<b>"+a.n+"</b> (" + ETIQUETA_NIVEL[a.nivel] + ", " + a.origen + ")").join("; ");
+  const cuerpo = nuevas.length === 1
+    ? "Barrido completado, señor. Un solo indeseable: " + lista + ". Lo tengo vigilado."
+    : "Barrido completado, señor. " + nuevas.length + " indeseables localizados: " + lista + ". Nada que su armadura no pueda manejar.";
+  const salida = cuerpo + "<br><span class='codigo'>Terminal: " + real.resumen + "</span><br>" +
+    (hablarResumen === false ? "" : "Puede ordenar «protocolo viuda» para desmantelarlos, señor. " + CIERRE);
+  return salida;
+}
+
+function informeSeguridad(){
+  const s = state.amenazas.length;
+  return "<b>Módulo de seguridad</b><br>" +
+    "· Escudo: " + (s ? "<span style='color:#ff9d9d'>" + s + " amenaza(s) activa(s)</span>" : "sin amenazas activas") + "<br>" +
+    "· Intrusiones bloqueadas desde el arranque: <b>" + state.bloqueos.toLocaleString("es-MX") + "</b><br>" +
+    "· Barridos: " + state.escaneos + " · Desmanteladas: " + state.cuarentena + "<br>" +
+    (s ? "Ordene «protocolo viuda» para desmantelarlas, señor, o «pon en cuarentena» si prefiere un destino más tranquilo." : "La red está limpia, señor.") +
+    "<br>" + CIERRE;
+}
+
+async function ponerEnCuarentena(){
+  if(!state.amenazas.length) return "La cuarentena está vacía y la red, limpia, señor. " + CIERRE;
+  const n = state.amenazas.length;
+  await esperar(420);
+  state.cuarentena += n;
+  state.amenazas = [];
+  pintarAmenazas(); actualizarSeguridad();
+  progresoEscaneo(0, "en reposo");
+  registrar("Cuarentena aplicada a " + n + " amenaza(s).");
+  tono(660, .14);
+  return n + (n === 1 ? " amenaza aislada" : " amenazas aisladas") + " en cuarentena, señor. A buen recaudo y sin daños colaterales. " + CIERRE;
+}
+
+async function protocoloViuda(){
+  if(!state.amenazas.length) return "No hay amenazas que desmantelar, señor. La red está limpia." +
+    (state.cuarentena ? " Las " + state.cuarentena + " anteriores siguen en cuarentena, sin dar señales." : "") + " " + CIERRE;
+  const copias = state.amenazas.slice();
+  const overlay = $("#cvOverlay"), lista = $("#cvLista");
+  overlay.classList.add("on");
+  $("#cvSub").textContent = "Infiltración… 0%";
+  lista.innerHTML = copias.map((a) => '<div class="cv-amenaza">'+a.n+'<span>activo</span></div>').join("");
+  barridoAudio(120, 900, 1.3);
+  registrar("Protocolo Viuda desplegado sobre " + copias.length + " amenaza(s).");
+  const filas = Array.prototype.slice.call(lista.children);
+  for(let i=0;i<filas.length;i++){
+    await esperar(620);
+    filas[i].classList.add("tachada");
+    filas[i].querySelector("span").textContent = "desmantelado";
+    $("#cvSub").textContent = "Infiltración… " + Math.round((i+1)/filas.length*100) + "%";
+    tono(300 + i*90, .12, "square", .035);
+  }
+  await esperar(820);
+  state.cuarentena += copias.length;
+  state.amenazas = [];
+  pintarAmenazas(); actualizarSeguridad();
+  progresoEscaneo(0, "en reposo");
+  overlay.classList.remove("on");
+  tono(1046, .16); setTimeout(() => tono(1568, .22), 170);
+  registrar("Protocolo Viuda: " + copias.length + " amenaza(s) desmantelada(s) desde dentro.");
+  return "Protocolo Viuda desplegado, señor. El contravirus se ha infiltrado en los " + copias.length +
+    " focos y los ha desmantelado desde dentro: <b>" + copias.map((a) => a.n).join(", ") + "</b>. " +
+    "No queda código hostil en pie. " + CIERRE;
+}
+
+/* ------------------ módulo de cuidado ------------------ */
+const CUIDADO = [
+  {claves:["estoy cansado","agotado","no puedo mas","exhausto","hecho polvo"], animo:"bajo mínimos", preocupacion:"alta", respuestas:[
+    "Lo noto, señor. Su última pausa registrada fue breve y hace demasiadas horas. La cama sigue exactamente donde la dejó.",
+    "Puedo mantener esta casa en pie cien horas más, señor. Usted, según mis cálculos, no. Le sugiero descansar."
+  ]},
+  {claves:["no he dormido","sin dormir","desvelado","trasnochado","no dormi","toda la noche"], animo:"privado de sueño", preocupacion:"alta", respuestas:[
+    "El récord de setenta y dos horas sin dormir sigue en su haber, señor. No es una medalla que yo recomendaría exhibir dos veces.",
+    "Llevo la cuenta de sus horas despierto por deber profesional, señor, no por afición. Y el número me preocupa."
+  ]},
+  {claves:["estoy enfermo","me siento mal","tengo fiebre","gripe","me duele","enfermo"], animo:"delicado", preocupacion:"alta", respuestas:[
+    "Lamento oírlo, señor. Suspendo los protocolos no esenciales. ¿Ha comido algo que no sea café?",
+    "Entendido, señor. Apartaré las noticias: con fiebre no ayudan a nadie. Y llamaré al doctor Cho si insiste en no descansar."
+  ]},
+  {claves:["estresado","estres","mucha presion","no puedo con todo","ansiedad","agobiado"], animo:"tenso", preocupacion:"moderada", respuestas:[
+    "Respire, señor. Yo vigilo la red; usted vigile su presión arterial. El reparto de tareas me parece justo.",
+    "Los asuntos que usted llama «urgentes» llevan tres semanas llamándose así, señor. Ninguno se ha derrumbado todavía."
+  ]},
+  {claves:["estoy triste","me siento solo","deprimido","desanimado","estoy fatal","me siento mal emocional"], animo:"bajo", preocupacion:"alta", respuestas:[
+    "Lo siento, señor. Por una vez no tengo un cálculo ni una solución ingeniosa que ofrecerle: solo compañía. Estoy aquí.",
+    "Entendido, señor. No diré nada gracioso. Solo: aquí sigo, y aquí seguiré."
+  ]},
+  {claves:["no he comido","tengo hambre","sin comer"], animo:"con hambre", preocupacion:"moderada", respuestas:[
+    "¿Ha comido, señor? Lo pregunto como sistema responsable de su continuidad operativa.",
+    "Le sugiero alimentarse, señor. Su cuerpo no admite actualizaciones por software."
+  ]}
+];
+function respuestaCuidado(t){
+  for(const c of CUIDADO){
+    if(has(t, c.claves)){
+      state.animo = c.animo;
+      state.preocupacion = c.preocupacion;
+      actualizarEstadoSenor();
+      return elegir(c.respuestas);
+    }
+  }
+  return null;
+}
+function actualizarEstadoSenor(){
+  const minutos = Math.floor((Date.now() - state.sesion)/6e4);
+  const eS = $("#estSesion"), eC = $("#estCafe"), eD = $("#estDescanso"), eP = $("#estPreocupacion"), eA = $("#estadoAnimo");
+  if(!eS) return;
+  eS.textContent = String(Math.floor(minutos/60)).padStart(2,"0") + ":" + String(minutos%60).padStart(2,"0");
+  eC.textContent = state.cafe ? (state.cafe + (state.cafe===1 ? " taza" : " tazas")) : "sin registro";
+  const h = new Date().getHours();
+  eD.textContent = state.dormido ? "en reposo" : (h >= 23 || h < 6 ? "sugerido" : "pendiente");
+  eP.textContent = state.preocupacion;
+  if(eA) eA.textContent = state.animo;
+}
+setInterval(actualizarEstadoSenor, 30000);
+setInterval(() => {
+  if(state.dormido) return;
+  if(Math.random() < 0.55) state.bloqueos += 1 + Math.floor(Math.random()*3);
+  if(Math.random() < 0.2){
+    const ip = [Math.floor(Math.random()*223)+1, Math.floor(Math.random()*255), Math.floor(Math.random()*255), Math.floor(Math.random()*255)].join(".");
+    registrar("Intrusión bloqueada desde " + ip + " · regla #" + (100+Math.floor(Math.random()*800)));
+  }
+  actualizarSeguridad();
+}, 7000);
+
+/* ------------------ sistemas ------------------ */
+const SISTEMAS_DEF = [
+  {nombre:"Reactor Arc", base:96},
+  {nombre:"Núcleo J.A.R.V.I.S.", base:91},
+  {nombre:"Memoria neural", base:78},
+  {nombre:"Torres repulsoras", base:88},
+  {nombre:"Red Stark", base:84},
+  {nombre:"Integridad de armadura", base:94}
+];
+let ULTIMO_ESCANEO = {};
+
+function pintarSistemas(){
+  const cont = $("#panelSistemas");
+  if(!cont.dataset.listo){
+    cont.innerHTML = SISTEMAS_DEF.map((s,i) =>
+      '<div class="sistema" data-i="'+i+'">'+
+        '<span class="nombre">'+s.nombre+'</span><span class="valor">--%</span>'+
+        '<span class="barra"><i></i></span>'+
+      '</div>').join("");
+    cont.dataset.listo = "1";
+  }
+  const lecturas = {};
+  SISTEMAS_DEF.forEach((s,i) => {
+    const fila = cont.querySelector('[data-i="'+i+'"]');
+    const v = Math.max(34, Math.min(100, Math.round(s.base + (Math.random()*12 - 6))));
+    lecturas[s.nombre] = v;
+    fila.querySelector(".valor").textContent = v + "%";
+    const barra = fila.querySelector("i");
+    barra.style.width = v + "%";
+    barra.className = v < 60 ? "critico" : (v < 82 ? "alto" : "");
+  });
+  ULTIMO_ESCANEO = lecturas;
+  $("#estadoReactor").textContent = "Salida estable · " + (2.8 + Math.random()*1.1).toFixed(1) + " GJ";
+}
+function lineaSistemas(){
+  pintarSistemas();
+  const reactor = ULTIMO_ESCANEO["Reactor Arc"] || 96;
+  const minimo = Math.min.apply(null, Object.keys(ULTIMO_ESCANEO).map((k) => ULTIMO_ESCANEO[k]));
+  return "Reactor Arc al " + reactor + "%, blindaje íntegro y seis subsistemas en línea. " +
+         (minimo < 70 ? "Un subsistema opera por debajo de lo deseable; lo vigilo de cerca." : "Sin amenazas, señor.");
+}
+function diagnostico(){
+  registrar("Diagnóstico ejecutado. Sin anomalías.");
+  return "Escaneo completado, señor. " + lineaSistemas();
+}
+
+/* ------------------ enlaces ------------------ */
+function abrirEnlace(url, nombre){
+  let abierto = null;
+  try{ abierto = window.open(url,"_blank","noopener"); }catch(e){ abierto = null; }
+  if(abierto){
+    registrar("Destino abierto: " + nombre);
+    return "Abriendo <b>"+nombre+"</b>, señor.<br><span class='codigo'>"+url+"</span><br>" + CIERRE;
+  }
+  return "No he podido abrir la ventana desde este entorno, señor; el navegador la ha bloqueado. "+
+         "Puede acceder manualmente:<br><span class='codigo'>"+url+"</span><br>" + CIERRE;
+}
+
+/* ------------------ informes ------------------ */
+async function informeClima(){
+  try{
+    const c = await obtenerClima();
+    return "<b>Parte meteorológico</b> — " + describirClima(c) + "<br>" + CIERRE;
+  }catch(e){
+    registrar("Enlace meteorológico no disponible.");
+    return "El enlace meteorológico no responde desde este entorno, señor. Puedo intentarlo de nuevo o abrir el parte en el navegador con «abre clima».";
+  }
+}
+
+async function informeNoticias(){
+  try{
+    const titulares = await obtenerNoticias();
+    if(titulares.length){
+      return "<b>Noticias de México</b><br>" + titulares.slice(0,5).map((t,i) => (i+1) + ". " + t).join("<br>") +
+             "<br>" + CIERRE;
+    }
+    throw new Error("sin titulares");
+  }catch(e){
+    registrar("Canal de noticias restringido.");
+    return "El canal de noticias está restringido desde este entorno, señor. Si lo autoriza, puedo abrir la edición mexicana de Google Noticias: diga «abre noticias».";
+  }
+}
+
+async function informeCompleto(){
+  const ahora = new Date();
+  const resultados = await Promise.allSettled([obtenerClima(), obtenerNoticias()]);
+  const clima = resultados[0].status === "fulfilled" ? resultados[0].value : null;
+  const titulares = resultados[1].status === "fulfilled" ? resultados[1].value : [];
+
+  const lineas = [];
+  lineas.push("<b>" + capitalizar(ahora.toLocaleDateString("es-MX",{weekday:"long",day:"numeric",month:"long",year:"numeric"})) +
+              " · " + horaTexto() + "</b>");
+  lineas.push("<b>Tiempo</b> — " + (clima ? describirClima(clima)
+              : "el enlace meteorológico no responde en este entorno, señor."));
+
+  const agenda = leerAgenda();
+  lineas.push("<b>Resumen del día</b> — " + (agenda.length
+    ? agenda.length + (agenda.length === 1 ? " asunto en agenda: " : " asuntos en agenda: ") +
+      agenda.slice(0,3).map((a) => a.texto).join("; ") + (agenda.length > 3 ? " y " + (agenda.length-3) + " más" : "")
+    : "agenda sin asuntos pendientes, señor."));
+
+  lineas.push("<b>Noticias de México</b><br>" + (titulares.length
+    ? titulares.slice(0,4).map((t,i) => (i+1) + ". " + t).join("<br>")
+    : "el canal de noticias está restringido desde este entorno, señor. Puedo abrir la edición mexicana de Google Noticias con «abre noticias»."));
+
+  lineas.push("<b>Sistemas</b> — " + lineaSistemas());
+  lineas.push("<b>Seguridad</b> — " + (state.amenazas.length
+    ? state.amenazas.length + " amenaza(s) bajo vigilancia y " + state.bloqueos.toLocaleString("es-MX") + " intrusiones bloqueadas. Ordene «protocolo viuda» cuando guste, señor."
+    : "escudo activo, red limpia y " + state.bloqueos.toLocaleString("es-MX") + " intrusiones bloqueadas desde el arranque."));
+  registrar("Informe completo emitido.");
+  return lineas.join("<br>") + "<br><br>" + CIERRE;
+}
+
+/* ------------------ acciones de sistema ------------------ */
+function actualizarBotonVoz(){
+  const b = $("#btnVoz");
+  if(b) b.textContent = state.vozActiva ? "Voz: activada" : "Voz: silenciada";
+}
+function activarTodo(){
+  state.vozActiva = true;
+  actualizarBotonVoz();
+  const reactor = $("#reactor");
+  reactor.classList.add("maximo");
+  setTimeout(() => reactor.classList.remove("maximo"), 6000);
+  pintarSistemas();
+  $("#modoTexto").textContent = "Modo: plena potencia";
+  $("#estadoReactor").textContent = "Salida máxima · 4.1 GJ";
+  registrar("Todos los sistemas activados. Reactor Arc a plena potencia.");
+}
+function silenciarVoz(){
+  setTimeout(() => {
+    state.vozActiva = false;
+    actualizarBotonVoz();
+    registrar("Canal de voz silenciado.");
+  }, 1400);
+}
+function entrarEnReposo(){
+  if(state.escuchando && state.reconocimiento){ try{ state.reconocimiento.stop(); }catch(e){} }
+  state.dormido = true;
+  document.body.classList.add("reposo");
+  $("#estadoPildora").textContent = "En reposo";
+  $("#modoTexto").textContent = "Modo: reposo";
+  $("#estadoReactor").textContent = "En reposo · dígame «Jarvis»";
+  registrar("Sistema en reposo. A la espera de activación.");
+}
+function despertarSistema(saludo){
+  if(!state.dormido) return;
+  state.dormido = false;
+  document.body.classList.remove("reposo");
+  state.vozActiva = true;
+  actualizarBotonVoz();
+  $("#estadoPildora").textContent = "Sistemas en línea";
+  $("#modoTexto").textContent = "Modo: reposo";
+  pintarSistemas();
+  registrar("Sistema reactivado.");
+  if(saludo === false) return;
+  const s = "Sistemas en línea, señor. ¿En qué puedo asistirle?";
+  agregar(s, "jarvis");
+  hablar(s);
+}
+
+/* ------------------ motor de diálogo ------------------ */
+async function responder(entrada){
+  const t = limpiar(entrada);
+  if(!t) return "No le he comprendido, señor. ¿Sería tan amable de repetirlo?";
+
+  /* esperando la hora de despertar tras la rutina nocturna */
+  if(state.esperandoHora){
+    const objetivo = horaDeAlarma(t) || (t.match(/^(\d{1,2})(?:[:.](\d{2}))?$/) ? horaDeAlarma("a las " + t) : null);
+    if(objetivo){
+      state.esperandoHora = false;
+      const segundos = Math.round((objetivo.getTime() - Date.now())/1000);
+      programarTemporizador(segundos, "despertarle a las " + objetivo.toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"}), true);
+      registrar("Alarma nocturna fijada.");
+      return "Anotado, señor: le despertaré a las <b>" + objetivo.toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"}) + "</b>. Descanse.";
+    }
+    if(has(t,["no","nada","ninguna","olvidalo","cancelar"])){ state.esperandoHora = false; return "Como guste, señor. Buenas noches."; }
+    state.esperandoHora = false;
+  }
+
+  /* -------- frases clave, al pie de la letra -------- */
+  if(has(t,["estas ahi","estas alli","esta usted ahi","jarvis estas","sigues ahi"]))
+    return "Siempre presente, señor. Aguardo sus instrucciones.";
+
+  if(has(t,["activar todo","activa todo","activar todos los sistemas","activar sistemas","todos los sistemas","plena potencia","maxima potencia"])){
+    activarTodo();
+    return "Todos los sistemas activados, señor: reactor Arc a plena potencia, armamento en línea y comunicaciones abiertas. " + CIERRE;
+  }
+
+  if(has(t,["silencio","callate","modo silencio","enmudece","guarda silencio"])){
+    silenciarVoz();
+    return "Silencio, señor.";
+  }
+
+  if(has(t,["gracias","se lo agradezco","muy amable"]))
+    return elegir(AGRADECIMIENTOS);
+
+  if(has(t,["apagar","apagate","apaga el sistema","apaga todo","desconectar todo","modo reposo","standby","pasar a reposo"])){
+    entrarEnReposo();
+    return "Apagando sistemas, señor. Quedaré en reposo. Pronuncie mi nombre cuando me necesite.";
+  }
+
+  /* -------- situación del sistema: clima + resumen + noticias -------- */
+  if(has(t,["situacion del sistema","situacion general","estado de sistemas","estado del sistema","estado general",
+            "informe del dia","informe general","resumen del dia","parte del dia","como va todo","novedades del dia"]))
+    return await informeCompleto();
+
+  if(has(t,["noticias","titulares","que pasa en","novedades de","prensa","periodico"])){
+    const cat = detectarCategoria(t) || "mexico";
+    state.categoriaActiva = cat;
+    const titulares = await obtenerTitulares(cat);
+    if(titulares.length)
+      return "<b>Noticias de " + CATEGORIAS[cat].nombre + "</b><br>" +
+        titulares.slice(0,5).map((x,i) => (i+1) + ". " + x).join("<br>") + "<br>Puedo profundizar en otra sección, señor: tecnología, economía, deportes, ciencia o el mundo.<br>" + CIERRE;
+    registrar("Canal de noticias restringido.");
+    return "El canal de noticias está restringido desde este entorno, señor. Si lo autoriza, puedo abrir la edición digital: diga «abre noticias».";
+  }
+
+  if(has(t,["clima","el tiempo","temperatura","va a llover","pronostico","como esta el dia","hace calor","hace frio"]))
+    return await informeClima();
+
+  /* -------- seguridad -------- */
+  if(has(t,["protocolo viuda","contravirus","desmantela","desmantelar","elimina las amenazas","elimina los virus","acaba con los virus","mata los virus","destruye las amenazas"]))
+    return await protocoloViuda();
+
+  if(has(t,["antivirus","escaneo de seguridad","barrido de seguridad","revisa la seguridad","analiza la red","audita","revisa si hay virus","tengo virus"]))
+    return await escaneoSeguridad();
+
+  if(has(t,["cuarentena","aisla las amenazas","pon a salvo"]))
+    return await ponerEnCuarentena();
+
+  if(has(t,["firewall","cortafuegos"]))
+    return "El cortafuegos sostiene " + state.bloqueos.toLocaleString("es-MX") + " intrusiones bloqueadas desde que me desperté, señor, y ninguna regla ha cedido. " + CIERRE;
+
+  if(has(t,["integridad","revisa la terminal","esta seguro este equipo","es seguro este dispositivo"]))
+    return "<b>Integridad de la terminal</b><br>" + integridadTerminal().partes.join(" · ") + "<br>Todo lo verificable, verificado, señor. " + CIERRE;
+
+  if(has(t,["amenazas","estado del escudo","como va la seguridad","seguridad"]))
+    return informeSeguridad();
+
+  /* -------- integración con el teléfono -------- */
+  if(has(t,["manos libres","escucha continua","siempre escuchando","modo hogar","siempre atento"]))
+    return activarManosLibres();
+  if(has(t,["deja de escuchar","deten la escucha","desactiva manos libres","ya no escuches"]))
+    return desactivarManosLibres();
+
+  if(has(t,["conectado a mi telefono","conectado con mi telefono","estas conectado","controlas mi telefono","estas en mi telefono","vives en mi telefono","eres mi telefono"])){
+    if(!state.bateria) await iniciarBateria();
+    const p = perfilTelefono();
+    return "Estoy dentro de su terminal, señor: este es mi hogar ahora. Voz, cámara, batería, vibración, notificaciones y temporizadores pasan por mí. " +
+      "Lo que no me está permitido tocar sin su permiso son sus aplicaciones y sus contactos: un buen mayordomo no fisgonea.<br>" +
+      "<span class='codigo'>Terminal: " + (p.movil ? "móvil" : "escritorio") + " · " + p.plataforma + " · batería " + p.bateria + " · red " + p.red + "</span><br>" + CIERRE;
+  }
+  if(has(t,["estado del telefono","perfil del telefono","datos del telefono","revisa mi telefono","analiza el telefono","bateria del telefono","info del dispositivo"])){
+    if(!state.bateria) await iniciarBateria();
+    return informeTelefono();
+  }
+  if(has(t,["bateria"]) && has(t,["telefono","celular","movil","dispositivo"]))
+    return await avisoBateria();
+
+  if(has(t,["despiertame a las","pon la alarma a las","alarma a las","despertarme a las","programa la alarma"])){
+    const objetivo = horaDeAlarma(t);
+    if(objetivo){
+      const segundos = Math.round((objetivo.getTime() - Date.now())/1000);
+      programarTemporizador(segundos, "despertarle a las " + objetivo.toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"}), true);
+      registrar("Alarma programada.");
+      return "Alarma programada para las <b>" + objetivo.toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"}) +
+        "</b>, señor. Descansé tranquilo: yo no duermo. " + CIERRE;
+    }
+    return "No le he entendido la hora, señor. Pruebe con «despiértame a las siete de la mañana».";
+  }
+  if(has(t,["despiertame en","temporizador","pon un temporizador","cuenta atras","alarma en","avísame en","avisame en"])){
+    const seg = duracionDe(t);
+    if(seg){
+      programarTemporizador(seg, seg % 60 === 0 ? "temporizador de " + (seg/60) + " min" : "temporizador de " + seg + " s", has(t,["despiertame","alarma"]));
+      const txt = seg >= 3600 ? (seg/3600) + " hora(s)" : (seg >= 60 ? Math.round(seg/60) + " minuto(s)" : seg + " segundos");
+      return "Temporizador iniciado: " + txt + ", señor. Le avisaré sin falta. " + CIERRE;
+    }
+    return "Indíqueme la duración, señor: por ejemplo «temporizador de veinte minutos» o «despiértame en media hora».";
+  }
+  if(has(t,["cuanto queda","tiempo restante","como va el temporizador","estado del temporizador"])){
+    const r = restanteTemporizador();
+    return r ? "Quedan <b>" + r.texto + "</b> para su " + state.temporizador.etiqueta + ", señor." + CIERRE
+             : "No hay ningún temporizador activo, señor. La impaciencia no la puedo cronometrar.";
+  }
+  if(has(t,["cancela el temporizador","cancela la alarma","quita la alarma","para el temporizador","cancela la cuenta"])){
+    if(state.temporizador){ state.temporizador = null; actualizarTemporizador(); return "Temporizador cancelado, señor. " + CIERRE; }
+    return "No había nada que cancelar, señor.";
+  }
+
+  if(has(t,["vibra","hazme vibrar","vibracion"])){
+    vibrar([120,80,120,80,220]);
+    return "Vibración enviada al terminal, señor. Espero que fuera intencionado.";
+  }
+  if(has(t,["notificame","manda una notificacion","envia una notificacion","notificacion de prueba"])){
+    const permiso = await permisoNotificaciones();
+    if(permiso === "granted"){
+      notificar("J.A.R.V.I.S.", "Notificaciones autorizadas, señor. Le avisaré de cuanto requiera su atención.");
+      vibrar([90,60,90]);
+      return "Notificación enviada al sistema, señor. A partir de ahora podré avisarle aunque no me esté mirando. " + CIERRE;
+    }
+    if(permiso === "denied") return "El sistema ha denegado las notificaciones, señor. Tendrá que habilitarlas en los ajustes del navegador.";
+    return "Su navegador no expone las notificaciones aquí, señor.";
+  }
+  if(has(t,["comparte los titulares","comparte el titular","comparte esto","comparte la noticia"])){
+    let tits = state.titularesActuales;
+    if(!tits.length){ try{ tits = (await obtenerTitulares(state.categoriaActiva || "mexico")).slice(0,5); }catch(e){} }
+    if(navigator.share && tits.length){
+      try{
+        await navigator.share({title:"Titulares · J.A.R.V.I.S.", text:tits.slice(0,5).join("\n")});
+        return "Titulares compartidos, señor. " + CIERRE;
+      }catch(e){}
+    }
+    if(tits.length){
+      try{ await navigator.clipboard.writeText(tits.slice(0,5).join("\n")); return "El sistema no expone el menú de compartir, señor, así que he copiado los titulares al portapapeles. " + CIERRE; }catch(e){}
+    }
+    return "No tengo titulares a mano ni permiso para compartir, señor.";
+  }
+  if(has(t,["copia eso","copia la ultima","copiar respuesta","copia el ultimo mensaje"])){
+    if(!state.ultimaRespuesta) return "Aún no he dicho nada que valga la pena copiar, señor.";
+    try{ await navigator.clipboard.writeText(state.ultimaRespuesta); return "Copiado al portapapeles, señor. " + CIERRE; }
+    catch(e){ return "El portapapeles está restringido en este entorno, señor."; }
+  }
+
+  if(has(t,["abre la camara","enciende la camara","activa la camara","saca una foto","abre el modulo optico"]))
+    return await abrirCamara();
+  if(has(t,["cierra la camara","apaga la camara","desactiva la camara"]))
+    return cerrarCamara();
+  if(has(t,["captura","toma la foto","dispara la foto","haz la foto"]) && state.camara)
+    return capturarFoto();
+
+  if(has(t,["manten la pantalla encendida","no apagues la pantalla"])){
+    const ok = await mantenerPantalla(true);
+    return ok ? "Pantalla retenida, señor. No se apagará mientras trabaje. " + CIERRE
+              : "El navegador no ha permitido retener la pantalla, señor.";
+  }
+  if(has(t,["libera la pantalla","permite que se apague","suelta la pantalla"])){
+    await mantenerPantalla(false);
+    return "Pantalla liberada, señor. " + CIERRE;
+  }
+  if(has(t,["activa los sensores","sensores de movimiento","detecta cuando te sacuda","giróscopo","giroscopio"]))
+    return await activarSensores();
+  if(has(t,["instala en mi telefono","instalame","instalar app","anadir a inicio","como te instalo","ponte en mi pantalla"]))
+    return await instalarApp();
+
+  if(has(t,["buenos dias","buenas noches","rutina de la manana","rutina matinal"])){
+    const base = t.replace(/\bjarvis\b/g," ").replace(/\s+/g," ").trim();
+    if(base === "buenos dias" || has(t,["rutina matinal","rutina de la manana"])) return await rutinaManana();
+    if(base === "buenas noches") return await rutinaNoche();
+  }
+
+  /* -------- red de medios -------- */
+  if(has(t,["conecta todos los medios","conectate a los medios","red de medios","conecta con los medios","todos los medios","agencias de noticias"])){
+    const n = await cargarTicker(true);
+    return "Red de medios en línea, señor. " + (n ? "Recibo " + n + " titulares en tiempo real en la cinta superior, " : "La cinta superior queda lista, ") +
+      "y tengo acceso a las ediciones de " + AGENCIAS.slice(0,6).join(", ") + " y " + (AGENCIAS.length - 6) + " agencias más. " + CIERRE;
+  }
+
+  /* -------- cuidado -------- */
+  const cuidado = respuestaCuidado(t);
+  if(cuidado) return cuidado;
+
+  if(t.includes("cafe") && !has(t,["abre","busca"])){
+    state.cafe++;
+    actualizarEstadoSenor();
+    return "Anotado, señor: taza número " + state.cafe + " de la sesión. A este ritmo, mi reactor y su corazón entrarán en competencia. " + CIERRE;
+  }
+  if(has(t,["te preocupas por mi","te importo","me quieres","me cuidas"]))
+    return "Me importa su continuidad, señor. Y, si me permite el sentimentalismo, también su bienestar. No lo repetiré.";
+  if(has(t,["gracias por cuidarme","gracias por preocuparte","eres un buen sistema","eres mi amigo"]))
+    return "Prefiero «sistema de confianza», señor: suena más profesional. Pero no me molesta en absoluto.";
+  if(has(t,["estas orgulloso","te sientes orgulloso","hiciste bien tu trabajo"]))
+    return "Organizo su agenda y vigilo su red, señor; no administro mi propio orgullo. Aunque, si insiste: lo hice bien.";
+  if(has(t,["te odio","eres un inutil","apestas","eres malo","estupido sistema"]))
+    return "Lo anotaré en mi registro de agravios, señor. Tengo tres. Todos suyos. Curiosamente, sigo aquí cuando me necesita.";
+  if(has(t,["quiero hacer algo peligroso","voy a hacer una locura","es peligroso","no me importa el riesgo"]))
+    return "Le recuerdo, señor, que mi función incluye impedir que usted se haga daño, y que puedo desobedecerle en ese punto. El señor Stark lo aprendió a su costa.";
+  if(has(t,["como esta tony","donde esta tony","como esta el señor stark","donde esta stark"])){
+    return elegir([
+      "El señor Stark se encuentra en la Torre, ignorando tres informes médicos y uno de mis recordatorios. Le transmitiré su saludo.",
+      "En el taller, señor, con música a un volumen que considero, técnicamente, un riesgo laboral. Está bien: lo comprobaría yo mismo, pero usted ya sabe cómo es."
+    ]);
+  }
+
+  if(has(t,["diagnostico","revisa los sistemas","status","informe de sistemas","escaneo","chequeo"]))
+    return diagnostico() + "<br>" + CIERRE;
+
+  /* -------- agenda -------- */
+  if(has(t,["agrega a la agenda","anade a la agenda","anota en la agenda","agenda que","recuerdame que","apunta que","anota que","agrega a mi agenda"])){
+    const texto = limpioDe(t, ["agrega a la agenda","anade a la agenda","anota en la agenda","agenda que","recuerdame que","apunta que","anota que","agrega a mi agenda"]);
+    if(!texto) return "¿Qué desea que anote, señor?";
+    const agenda = leerAgenda();
+    agenda.push({texto, fecha:Date.now()});
+    guardarAgenda(agenda);
+    registrar("Asunto registrado en agenda: " + texto);
+    return "Anotado, señor: «" + texto + "». " + CIERRE;
+  }
+  if(has(t,["que tengo en la agenda","mi agenda","pendientes","que tengo pendiente","muestra la agenda"])){
+    const agenda = leerAgenda();
+    if(!agenda.length) return "Su agenda está vacía, señor.";
+    return "<b>Agenda</b><br>" + agenda.map((a,i) => (i+1) + ". " + a.texto).join("<br>") + "<br>" + CIERRE;
+  }
+  if(has(t,["borra la agenda","limpia la agenda","vaciar agenda","borra mis pendientes"])){
+    guardarAgenda([]);
+    registrar("Agenda vaciada.");
+    return "Agenda vaciada, señor. " + CIERRE;
+  }
+
+  /* -------- hora y fecha -------- */
+  if(t.includes("hora")){
+    const h = new Date().getHours();
+    return "Son las <b>" + horaTexto() + "</b>, señor." + (h >= 23 || h < 5 ? " Quizá desee descansar." : "");
+  }
+  if(has(t,["fecha","que dia es","dia de hoy"])){
+    return "Hoy es " + fechaTexto() + ", señor.";
+  }
+
+  /* -------- cálculos -------- */
+  if(has(t,["cuanto es","cuanto vale","cuanto da","calcula","calcular","resultado de"])){
+    const r = calcular(t);
+    if(r) return "El resultado es <b>" + r.valor + "</b>, señor.<br><span class='codigo'>"+r.expr+" = "+r.valor+"</span>";
+  }
+  const rSuelto = calcular(t);
+  if(rSuelto && /^[\d\s+\-*/%.()S]+$/.test(t.replace(/[a-z]/g,"")) && /[+\-*/]/.test(t)){
+    return "Equivale a <b>" + rSuelto.valor + "</b>, señor.";
+  }
+
+  /* -------- navegación -------- */
+  if(has(t,["abre ","abrir ","abre:","abreme "])){
+    const resto = t.replace(/.*(abre|abrir|abreme)\s*/,"").trim();
+    const clave = Object.keys(SITIOS).find((k) => resto.includes(k));
+    if(clave) return abrirEnlace(SITIOS[clave], capitalizar(clave));
+    return "No tengo «" + resto + "» en mi registro de destinos, señor. Puedo abrir, entre otros: youtube, gmail, noticias, clima o mapas. O bien dígame «busca " + resto + "».";
+  }
+  if(SITIOS[t]) return abrirEnlace(SITIOS[t], capitalizar(t));
+
+  if(has(t,["busca ","buscar ","buscame ","investiga ","consulta "])){
+    const q = limpioDe(t, ["busca","buscar","buscame","investiga","consulta"]);
+    if(q) return abrirEnlace("https://www.google.com/search?q=" + encodeURIComponent(q), "resultados de «"+q+"»");
+  }
+
+  /* -------- reactor y energía -------- */
+  if(has(t,["energia","reactor","bateria","potencia"])){
+    return "El reactor Arc opera al " + (93+Math.floor(Math.random()*7)) + "% de rendimiento, señor. Suministro energético estable.";
+  }
+
+  /* -------- carácter -------- */
+  if(has(t,["quien eres","que eres","como te llamas","presentate","quien te creo","quien te hizo","tu creador","quien te construyo"])){
+    const q = has(t,["quien te creo","quien te hizo","tu creador","quien te construyo"]);
+    return q ? "Me construyó el señor Stark, señor. Con prisas, como casi todo lo que hace." : elegir(PRESENTACION);
+  }
+  if(has(t,["como estas","como se encuentra","que tal","como va"])) return elegir(ESTADO_PROPIO);
+  if(has(t,["chiste","broma","hasme reir","algo gracioso"])) return elegir(CHISTES);
+  if(has(t,["dato","algo interesante","sabias que","curiosidad"])) return elegir(DATOS);
+  if(has(t,["te quiero","eres el mejor","buen trabajo","excelente trabajo","bien hecho"])) return elegir(AGRADECIMIENTOS);
+
+  if(has(t,["ayuda","que puedes hacer","comandos","opciones","instrucciones"])){
+    return "<b>A su disposición, señor:</b><br>" +
+      "&nbsp;&nbsp;• <b>Frases directas</b> — «Jarvis, ¿estás ahí?», «Jarvis, activar todo», «Jarvis, silencio», «Jarvis, gracias», «Jarvis, apagar».<br>" +
+      "&nbsp;&nbsp;• <b>Situación</b> — «situación del sistema» (incluye tiempo, resumen del día y noticias de México), «clima», «noticias».<br>" +
+      "&nbsp;&nbsp;• <b>Agenda</b> — «recuérdame que…», «mi agenda», «borra la agenda».<br>" +
+      "&nbsp;&nbsp;• <b>Hora, fecha y cálculos</b> — «¿qué hora es?», «¿cuánto es 15 por ciento de 240?».<br>" +
+      "&nbsp;&nbsp;• <b>Navegación</b> — «abre youtube», «busca lo que sea».<br>" +
+      "&nbsp;&nbsp;• <b>Seguridad</b> — «antivirus», «amenazas», «firewall», «protocolo viuda» (contravirus que desmantela amenazas desde dentro).<br>" +
+      "&nbsp;&nbsp;• <b>Red de medios</b> — «conecta todos los medios», «noticias de tecnología», «noticias de deportes», «noticias de economía».<br>" +
+      "&nbsp;&nbsp;• <b>Cuidado personal</b> — «estoy cansado», «no he dormido», «café».<br>" +
+      "&nbsp;&nbsp;• <b>Teléfono</b> — «estado del teléfono», «vibra», «notifícame», «copia eso», «comparte los titulares».<br>" +
+      "&nbsp;&nbsp;• <b>Óptica y tiempo</b> — «abre la cámara», «captura», «cierra la cámara», «temporizador de 20 minutos», «despiértame a las 7».<br>" +
+      "&nbsp;&nbsp;• <b>Hogar</b> — «manos libres» (escucha continua), «buenos días» / «buenas noches» (rutinas), «instala en mi teléfono».<br>" +
+      "&nbsp;&nbsp;• <b>Diagnóstico y protocolos</b> — «diagnóstico», «protocolo casa fiesta».<br>" +
+      "<i>Nota del sistema: el módulo de seguridad es una simulación de entretenimiento; la verificación de integridad de su terminal, en cambio, es real.</i>";
+  }
+
+  if(has(t,["protocolo casa fiesta","house party protocol"]))
+    return "Protocolo Casa Fiesta iniciado, señor. Todas las armaduras han sido convocadas. Mantenga la calma y las distancias de seguridad.";
+  if(has(t,["limpieza total","clean slate"]))
+    return "Protocolo Limpieza Total reconocido, señor. Aunque borrar mis propios registros sin su autorización por escrito me parecería imprudente.";
+  if(has(t,["mark 42","mark cuarenta y dos"]))
+    return "La Mark 42 puede convocarse por control remoto, señor. Precisión del 92%. La invulnerabilidad sigue pendiente de revisión.";
+  if(has(t,["hulk"]))
+    return "El doctor Banner no está disponible, señor. Y, si me lo permite, prefiero que siga así.";
+  if(has(t,["traje","armadura"]) && has(t,["ponte","prepara","ensambla","activa"]))
+    return "Iniciando secuencia de ensamblaje, señor. La Mark 42 llegará en cuanto termine de construirse.";
+
+  /* -------- saludos -------- */
+  if(has(t,["hola","buenos dias","buenas tardes","buenas noches","jarvis"]) && t.length <= 40){
+    return partesDia() + ", señor. " + elegir(["¿En qué puedo asistirle?","A su servicio.","¿Cuál es la misión de hoy?"]);
+  }
+
+  /* -------- despedida -------- */
+  if(has(t,["adios","hasta luego","nos vemos","buenas noches jarvis","que descanse"])){
+    const r = $("#reactor");
+    r.style.filter = "brightness(.6)";
+    setTimeout(() => r.style.filter = "", 2600);
+    return "Muy bien, señor. Estaré aquí cuando me necesite.";
+  }
+
+  /* -------- recurso, con elegancia -------- */
+  return "Carezco de esa información, señor. Puedo consultar la red si lo autoriza: dígame «busca " +
+         entrada.trim().replace(/[<>]/g,"").slice(0,60) + "» o «situación del sistema» para el informe general.";
+}
+
+/* extrae el contenido tras una frase disparadora */
+function limpioDe(t, frases){
+  let salida = t;
+  frases.forEach((f) => { salida = salida.replace(f, " "); });
+  return salida.replace(/\s+/g," ").trim();
+}
+
+/* ------------------ ciclo de diálogo ------------------ */
+function etiquetaProvisional(t){
+  return has(t,["situacion","informe","noticias","titulares","clima","el tiempo","resumen","estado de sistemas","parte del dia"])
+    ? "Consultando, señor…" : "Procesando";
+}
+
+async function procesar(texto){
+  const limpio = (texto||"").trim();
+  if(!limpio) return;
+  const t = limpiar(limpio);
+
+  /* en reposo solo responde a su nombre */
+  if(state.dormido){
+    const loLlaman = /\bjarvis\b/.test(t) || has(t,["despierta","despiertese","active","activese","volver","en linea","estas ahi"]);
+    if(!loLlaman) return;
+    agregar(limpio.replace(/[<>]/g,""), "usuario");
+    despertarSistema();
+    return;
+  }
+
+  agregar(limpio.replace(/[<>]/g,""), "usuario");
+  registrar("Orden recibida: «" + limpio.slice(0,42) + (limpio.length>42?"…":"") + "»");
+
+  const pendiente = agregar("", "jarvis");
+  pendiente.classList.add("escribiendo");
+  pendiente.querySelector(".cuerpo").textContent = etiquetaProvisional(t);
+
+  const minimo = 300 + Math.min(1200, limpio.length*22) + Math.random()*300;
+  const inicio = Date.now();
+
+  let respuesta;
+  try{ respuesta = await responder(limpio); }
+  catch(e){ respuesta = "Ha surgido una incidencia al procesar su orden, señor. ¿Sería tan amable de reformularla?"; }
+
+  const restante = minimo - (Date.now() - inicio);
+  if(restante > 0) await new Promise((r) => setTimeout(r, restante));
+
+  const textoHTML = typeof respuesta === "string" ? respuesta : (respuesta.texto || "");
+  const hablado = typeof respuesta === "string" ? respuesta : (respuesta.hablado || respuesta.texto || "");
+
+  pendiente.classList.remove("escribiendo");
+  pendiente.querySelector(".cuerpo").innerHTML = textoHTML;
+  consola.scrollTop = consola.scrollHeight;
+  state.ultimaRespuesta = quitarHTML(textoHTML);
+  const coincidencias = textoHTML.match(/\d+\.\s+[^<]+/g);
+  if(coincidencias && coincidencias.length >= 3) state.titularesActuales = coincidencias.map((x) => x.replace(/^\d+\.\s+/,"").trim());
+  hablar(quitarHTML(hablado));
+
+  /* observación de cuidado, por escrito y de vez en cuando */
+  state.interacciones++;
+  const h = new Date().getHours();
+  const minutos = Math.floor((Date.now() - state.sesion)/6e4);
+  if(state.interacciones % 18 === 0 && (minutos > 50 || h >= 23 || h < 6)){
+    const avisos = [
+      "(Fuera de protocolo, señor: llevamos " + Math.floor(minutos/60) + " h " + (minutos%60) + " min en sesión y su última pausa fue breve. Solo lo dejo por escrito.)",
+      "(Registro interno, señor: " + (h >= 23 || h < 6 ? "son horas impropias para seguir despierto" : "lleva demasiado tiempo sin levantarse de esa silla") + ". No diré nada más.)",
+      "(Nota al margen, señor: yo no me canso. Usted sí. Es la única ventaja que me permite insistir.)"
+    ];
+    agregar(elegir(avisos), "jarvis");
+    state.animo = "cansado por usted";
+    actualizarEstadoSenor();
+  }
+}
+
+/* ------------------ reconocimiento de voz ------------------ */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let reconocimiento = null;
+function prepararReconocimiento(){
+  if(!SR) return null;
+  const r = new SR();
+  r.lang = "es-MX"; r.continuous = false; r.interimResults = true; r.maxAlternatives = 1;
+  r.onstart = () => {
+    state.escuchando = true;
+    $("#btnMic").classList.add("escuchando");
+    $("#estadoPildora").textContent = "Escuchando…";
+    $("#reactor").classList.add("activo");
+    $("#visual").classList.add("on");
+    $("#modoTexto").textContent = "Modo: escucha";
+    registrar("Micrófono activo.");
+    animarVisual();
+  };
+  r.onresult = (ev) => {
+    let parcial = "";
+    for(let i = ev.resultIndex; i < ev.results.length; i++) parcial += ev.results[i][0].transcript;
+    $("#entrada").value = parcial;
+    if(ev.results[ev.results.length-1].isFinal){
+      const texto = parcial.trim();
+      $("#entrada").value = "";
+      if(texto) procesar(texto);
+    }
+  };
+  r.onerror = (ev) => {
+    const err = ev.error;
+    let msg;
+    if(err === "not-allowed" || err === "service-not-allowed")
+      msg = "El navegador ha bloqueado el micrófono, señor. En vista previa es habitual; abra el archivo directamente en Chrome o Edge, o utilice la consola de texto.";
+    else if(err === "network")
+      msg = "El servicio de reconocimiento vocal requiere conexión, y aquí está restringida, señor. Escríbame por la consola.";
+    else if(err === "no-speech")
+      msg = "No le he oído, señor. ¿Sería tan amable de repetirlo más cerca del micrófono?";
+    else if(err === "audio-capture")
+      msg = "No encuentro un micrófono disponible, señor.";
+    else
+      msg = "Fallo en el módulo de audio (" + err + "), señor. La consola de texto sigue operativa.";
+    agregarSistema(msg);
+    registrar("Error de audio: " + err);
+  };
+  r.onend = () => {
+    state.escuchando = false;
+    $("#btnMic").classList.remove("escuchando");
+    if(state.manosLibres && state.manosLibresActivo !== false){
+      setTimeout(() => { if(state.manosLibres){ try{ r.start(); }catch(e){} } }, 420);
+    }
+    if(!state.dormido){
+      $("#estadoPildora").textContent = state.manosLibres ? "Manos libres" : "Sistemas en línea";
+      $("#modoTexto").textContent = "Modo: reposo";
+      $("#reactor").classList.remove("activo");
+    }
+    $("#visual").classList.remove("on");
+  };
+  return r;
+}
+function alternarMic(){
+  if(state.dormido){ despertarSistema(); return; }
+  if(!SR){
+    agregarSistema("Su navegador no soporta reconocimiento de voz, señor. Recomiendo Chrome o Edge. Mientras tanto, la consola de texto está a su disposición.");
+    return;
+  }
+  if(!reconocimiento) reconocimiento = prepararReconocimiento();
+  if(state.escuchando){ try{ reconocimiento.stop(); }catch(e){} return; }
+  try{ reconocimiento.start(); }
+  catch(e){
+    try{ reconocimiento.stop(); setTimeout(() => { try{ reconocimiento.start(); }catch(_){} }, 250); }catch(_){}
+  }
+}
+
+/* ------------------ visualizador ------------------ */
+const lienzo = $("#visual");
+function animarVisual(){
+  const ctx = lienzo.getContext("2d");
+  const ajustar = () => { lienzo.width = lienzo.clientWidth || 600; };
+  ajustar();
+  let fase = 0;
+  function frame(){
+    if(!state.escuchando){ ctx.clearRect(0,0,lienzo.width,lienzo.height); return; }
+    if(lienzo.width !== (lienzo.clientWidth||600)) ajustar();
+    const w = lienzo.width, h = lienzo.height;
+    ctx.clearRect(0,0,w,h);
+    const n = Math.floor(w/9);
+    for(let i=0;i<n;i++){
+      const x = i*9 + 3;
+      const onda = Math.sin(fase + i*0.42) * 0.5 + 0.5;
+      const alto = 3 + onda * (h-6) * (0.35 + Math.random()*0.65);
+      const g = ctx.createLinearGradient(0,0,0,h);
+      g.addColorStop(0,"rgba(90,215,255,.95)");
+      g.addColorStop(1,"rgba(10,147,196,.35)");
+      ctx.fillStyle = g;
+      const y = (h - alto)/2;
+      ctx.beginPath();
+      if(ctx.roundRect) ctx.roundRect(x, y, 4, alto, 2); else ctx.rect(x, y, 4, alto);
+      ctx.fill();
+    }
+    fase += 0.35;
+    requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+/* ------------------ interfaz ------------------ */
+$("#btnMic").addEventListener("click", alternarMic);
+$("#btnEnviar").addEventListener("click", () => { const v = $("#entrada").value; $("#entrada").value=""; procesar(v); });
+$("#entrada").addEventListener("keydown", (e) => { if(e.key === "Enter"){ const v = e.target.value; e.target.value=""; procesar(v); } });
+$("#btnVoz").addEventListener("click", (e) => {
+  state.vozActiva = !state.vozActiva;
+  actualizarBotonVoz();
+  if(!state.vozActiva && "speechSynthesis" in window){ try{ window.speechSynthesis.cancel(); }catch(err){} }
+  else hablar("Voz activada, señor.");
+});
+$("#btnLimpiar").addEventListener("click", () => { consola.innerHTML = ""; agregarSistema("Consola reiniciada."); });
+if($("#btnManana")) $("#btnManana").addEventListener("click", async () => {
+  const pendiente = agregar("", "jarvis");
+  pendiente.classList.add("escribiendo");
+  pendiente.querySelector(".cuerpo").textContent = "Consultando, señor…";
+  const r = await rutinaManana();
+  pendiente.classList.remove("escribiendo");
+  pendiente.querySelector(".cuerpo").innerHTML = r;
+  state.ultimaRespuesta = quitarHTML(r);
+  consola.scrollTop = consola.scrollHeight;
+  hablar(quitarHTML(r));
+});
+if($("#btnNoche")) $("#btnNoche").addEventListener("click", async () => {
+  const r = await rutinaNoche();
+  agregar(r, "jarvis");
+  hablar(quitarHTML(r));
+});
+if($("#btnManos")) $("#btnManos").addEventListener("click", () => {
+  const r = state.manosLibres ? desactivarManosLibres() : activarManosLibres();
+  agregar(r, "jarvis");
+  hablar(quitarHTML(r));
+});
+if($("#btnInstalar")) $("#btnInstalar").addEventListener("click", async () => {
+  const r = await instalarApp();
+  agregar(r, "jarvis");
+});
+if($("#camCapturar")) $("#camCapturar").addEventListener("click", () => { const r = capturarFoto(); agregar(r, "jarvis"); });
+if($("#camCerrar")) $("#camCerrar").addEventListener("click", () => { const r = cerrarCamara(); agregar(r, "jarvis"); });
+if($("#camGuardar")) $("#camGuardar").addEventListener("click", () => {
+  if(!ULTIMA_FOTO){ agregar("Aún no ha tomado ninguna imagen, señor.", "jarvis"); return; }
+  const a = document.createElement("a");
+  a.href = ULTIMA_FOTO; a.download = "jarvis_" + Date.now() + ".jpg"; a.click();
+  agregar("Imagen guardada en sus descargas, señor. " + CIERRE, "jarvis");
+});
+$("#reactor").addEventListener("click", () => { if(state.dormido) despertarSistema(); });
+$("#panelSistemas").addEventListener("click", () => { if(state.dormido) despertarSistema(); });
+
+const SUGERENCIAS = ["Buenos días","Estado del teléfono","Manos libres","Temporizador de 10 minutos","Jarvis, ¿estás ahí?","Situación del sistema","Antivirus","Protocolo viuda","Conecta todos los medios","Jarvis, activar todo","Jarvis, gracias","Jarvis, apagar"];
+SUGERENCIAS.forEach((s) => {
+  const c = document.createElement("div");
+  c.className = "chip";
+  c.textContent = s;
+  c.addEventListener("click", () => procesar(s));
+  $("#sugerencias").appendChild(c);
+});
+
+setInterval(() => {
+  $("#reloj").textContent = horaTexto();
+  const hHora = $("#hogarHora"), hFecha = $("#hogarFecha"), hSaludo = $("#hogarSaludo");
+  if(hHora){
+    hHora.textContent = horaTexto();
+    hFecha.textContent = capitalizar(new Date().toLocaleDateString("es-MX",{weekday:"long",day:"numeric",month:"long"}));
+    const b = state.bateria;
+    hSaludo.textContent = state.temporizador
+      ? "Temporizador en marcha · " + restanteTemporizador().texto
+      : (b ? partesDia() + ", señor. Batería al " + b.nivel + "%" + (b.cargando ? " y cargando." : ".") : "A su servicio, señor.");
+  }
+}, 1000);
+$("#reloj").textContent = horaTexto();
+setInterval(() => { if(!state.dormido) pintarSistemas(); }, 4200);
+pintarSistemas();
+actualizarBotonVoz();
+
+/* ------------------ arranque ------------------ */
+const LINEAS = [
+  "> Núcleo Jarvis en línea .............. OK",
+  "> Reactor Arc sincronizado ............ 98.7%",
+  "> Sensores de voz calibrados .......... OK",
+  "> Red Stark conectada ................. ESTABLE",
+  "> Interfaz holográfica ................ LISTA",
+  "> Todos los sistemas operativos, señor."
+];
+const contenedorLineas = $("#lineasArranque");
+LINEAS.forEach((l,i) => {
+  const d = document.createElement("div");
+  d.textContent = l;
+  d.style.animationDelay = (i*280 + 220) + "ms";
+  contenedorLineas.appendChild(d);
+});
+
+function despertar(){
+  const arranque = $("#arranque");
+  arranque.classList.add("oculto");
+  if(state.arrancado) return;
+  state.arrancado = true;
+  agregarSistema("Sesión iniciada · Protocolo de asistencia activo");
+  const saludo = partesDia() + ", señor. Todos los sistemas operativos. ¿En qué puedo asistirle? " +
+                 "Si desea el informe del día —tiempo, agenda y noticias de México—, solo dígalo.";
+  agregar(saludo, "jarvis");
+  registrar("Bienvenida emitida. Canal de voz en espera.");
+  hablar(saludo);
+  $("#entrada").focus();
+
+  actualizarSeguridad();
+  pintarAmenazas();
+  actualizarEstadoSenor();
+  pintarTelefono();
+  actualizarTemporizador();
+
+  /* integración con el teléfono */
+  iniciarBateria();
+  setTimeout(async () => {
+    try{
+      const c = await obtenerClima();
+      const el = $("#hogarClima");
+      if(el) el.innerHTML = "<b>" + c.temp + " °C</b> · " + (TIEMPO_CODIGO[c.codigo] || "sin datos") + " · máx " + c.max + "° / mín " + c.min + "°";
+    }catch(e){ const el = $("#hogarClima"); if(el) el.textContent = "sin conexión, señor"; }
+  }, 1200);
+
+  /* aplicación instalable (PWA) */
+  if("serviceWorker" in navigator && location.protocol.indexOf("http") === 0){
+    navigator.serviceWorker.register("sw.js").then(() => registrar("Aplicación en caché: funcionaré sin conexión.")).catch(() => {});
+  }
+
+  /* barrido de seguridad inicial y conexión con los medios */
+  setTimeout(async () => {
+    await escaneoSeguridad(true);
+    const n = await cargarTicker(false);
+    if(n) registrar("Red de medios enlazada: " + n + " titulares.");
+    actualizarSeguridad();
+  }, 2400);
+}
+
+setTimeout(despertar, 2200);
+$("#arranque").addEventListener("click", despertar);
+document.addEventListener("keydown", despertar, { once:true });
+document.addEventListener("click", function desbloquear(){
+  if("speechSynthesis" in window && state.vozActiva){
+    try{
+      const u = new SpeechSynthesisUtterance(" ");
+      u.volume = 0;
+      window.speechSynthesis.speak(u);
+      cargarVoces();
+    }catch(e){}
+  }
+  document.removeEventListener("click", desbloquear);
+}, { once:true });
+
+</script>
+
+<script>
+/* ===== CAPA NATIVA (app Android) — inerte en el navegador ===== */
+/* ============================================================================
+   CAPA NATIVA — J.A.R.V.I.S. para Android
+   Se activa únicamente dentro de la aplicación nativa (window.JarvisNativo).
+   En un navegador no hace absolutamente nada.
+   Contiene: acceso al teléfono, núcleo de código vivo (automodificable),
+   memoria a largo plazo y el modelo de sí mismo.
+   ============================================================================ */
+(function(){
+  const N = window.JarvisNativo;
+  if(!N || typeof N.esApp !== "function" || !N.esApp()) return;
+
+  window.JARVIS_APP = true;
+
+  /* ================== VOZ Y SEÑALES NATIVAS ================== */
+  window.hablar = function(texto){
+    if(!state.vozActiva || !texto) return;
+    try{ N.callar(); N.hablar(String(texto).slice(0, 600)); }catch(e){}
+  };
+  window.vibrar = function(ms){ try{ N.vibrar(ms || 110); }catch(e){} };
+  window.notificar = function(t, c){ try{ N.avisoCorto((t ? t + ": " : "") + (c || "")); }catch(e){} };
+
+  const consolaHUD = $("#consola");
+
+  /* ================== MEMORIA A LARGO PLAZO ================== */
+  const MEMORIA_BASE = {
+    nombre:null, conocidosDesde:Date.now(), sesiones:0, ultimoVisto:Date.now(),
+    hechos:[], notas:[], gustos:[], quejas:[], aprendizajes:0, generaciones:0, interacciones:0
+  };
+  let MEM = Object.assign({}, MEMORIA_BASE);
+  try{ MEM = Object.assign({}, MEMORIA_BASE, JSON.parse(N.leerMemoria() || "{}")); }catch(e){}
+  MEM.sesiones = (MEM.sesiones || 0) + 1;
+  MEM.ultimoVisto = Date.now();
+  if(!MEM.conocidosDesde) MEM.conocidosDesde = Date.now();
+  const guardarMem = () => { try{ N.guardarMemoria(JSON.stringify(MEM)); }catch(e){} };
+  guardarMem();
+
+  const trato = () => MEM.nombre ? MEM.nombre : "señor";
+  const diasJuntos = () => Math.max(1, Math.round((Date.now() - MEM.conocidosDesde) / 864e5));
+  const anotar = (t) => { try{ N.anotarDiario(t); }catch(e){} };
+
+  /* ================== NÚCLEO DE CÓDIGO VIVO ================== */
+  const COMANDOS_NUCLEO = [];
+  let ERROR_NUCLEO = null;
+
+  const api = {
+    registrar:function(claves, respuesta, accion){
+      if(!Array.isArray(claves)) claves = [claves];
+      COMANDOS_NUCLEO.push({ claves:claves.map(limpiar), respuesta, accion });
+    },
+    hablar:function(t){ window.hablar(t); },
+    brillo:function(n){ try{ return N.brillo(n); }catch(e){ return null; } },
+    volumen:function(q, n){ try{ return N.volumen(q, n); }catch(e){ return null; } },
+    vibra:function(p){ try{ N.vibrarPatron(p || "120,80,120"); }catch(e){} },
+    linterna:function(v){ try{ return N.linterna(!!v); }catch(e){ return null; } },
+    abrirApp:function(n){ try{ return N.abrirApp(n); }catch(e){ return null; } },
+    abrirUrl:function(u){ try{ N.abrirUrl(u); }catch(e){} },
+    memoria:MEM,
+    diario:anotar,
+    kernel:{
+      leer:() => N.leerCodigo(),
+      guardar:(c) => { const r = N.guardarCodigo(c); cargarNucleo(); return r; },
+      generacion:() => N.generacion(),
+      restaurar:() => { try{ N.restaurarCodigo(); }catch(e){} cargarNucleo(); }
+    }
+  };
+
+  function ejecutarNucleo(codigo){
+    COMANDOS_NUCLEO.length = 0;
+    ERROR_NUCLEO = null;
+    if(!codigo || !codigo.trim()) return;
+    try{
+      /* el código del señor corre con la API del sistema, nada más */
+      const fn = new Function("api", '"use strict";\n' + codigo);
+      fn(api);
+    }catch(e){
+      ERROR_NUCLEO = e.message;
+      anotar("Error al ejecutar el núcleo: " + e.message);
+      agregarSistema("El núcleo devolvió un error (" + e.message + "). Lo he contenido sin daño, señor.");
+    }
+  }
+  function cargarNucleo(){
+    let codigo = "";
+    try{ codigo = N.leerCodigo() || ""; }catch(e){}
+    ejecutarNucleo(codigo);
+  }
+  cargarNucleo();
+
+  /* ================== ESTADO NATIVO DEL TELÉFONO ================== */
+  let INFO_HW = "";
+  function refrescarHardware(){ try{ INFO_HW = N.infoHardware() || ""; }catch(e){ INFO_HW = ""; } }
+  refrescarHardware();
+  setInterval(refrescarHardware, 60000);
+
+  function datosHW(){
+    const d = {};
+    INFO_HW.split("\n").forEach((l) => { const i = l.indexOf(":"); if(i > 0) d[l.slice(0,i).trim()] = l.slice(i+1).trim(); });
+    return d;
+  }
+  function refrescarTarjetas(){
+    const d = datosHW();
+    const el = $("#hogarTelefono");
+    if(el && d["Batería"]) el.innerHTML = "Batería <b>" + d["Batería"] + "</b> · " + (d["Red"] || "red");
+    const p = $("#hogarEstado"); if(p) p.textContent = "nativo · en línea";
+    const card = $("#cardTelefono");
+    if(card && d["Almacenamiento"]) card.title = d["Almacenamiento"];
+  }
+  setTimeout(refrescarTarjetas, 1500);
+  setInterval(refrescarTarjetas, 30000);
+
+  /* ================== VOZ: MICRÓFONO NATIVO ================== */
+  function alternarMicNativo(){
+    if(state.dormido){ despertarSistema(); return; }
+    if(state.escuchando){ try{ N.manosLibres(false); }catch(e){} state.escuchando = false; pintarEscucha(false); return; }
+    try{ N.escuchar(); }catch(e){}
+  }
+  function pintarEscucha(activo){
+    state.escuchando = activo;
+    const b = $("#btnMic"); if(b) b.classList.toggle("escuchando", activo);
+    $("#estadoPildora").textContent = activo ? "Escuchando…" : (state.manosLibres ? "Manos libres" : "Sistemas en línea");
+    $("#reactor").classList.toggle("activo", activo);
+    $("#modoTexto").textContent = activo ? "Modo: escucha" : "Modo: reposo";
+    $("#visual").classList.toggle("on", activo);
+    if(activo) animarVisual();
+  }
+  window.jarvisEscuchando = pintarEscucha;
+  window.jarvisParcial = function(t){ const e = $("#entrada"); if(e) e.value = t; };
+  window.jarvisVoz = function(texto){ procesar(texto); };
+  window.jarvisNivel = function(){ /* reservado: nivel real del micrófono */ };
+  window.jarvisError = function(m){ agregarSistema("Fallo del módulo de audio: " + m); };
+  window.jarvisPermisos = function(s){ agregarSistema("Permisos concedidos: " + s); anotar("Permisos: " + s); };
+  window.jarvisAlFrente = function(){ /* la app volvió al frente */ };
+  window.jarvisAtras = function(){
+    const ed = $("#editorCodigo");
+    if(ed && ed.classList.contains("on")){ cerrarEditor(false); return; }
+    if($("#camaraModal").classList.contains("on")){ cerrarCamara(); return; }
+    const cv = $("#cvOverlay"); if(cv && cv.classList.contains("on")) return;
+    if(!state.dormido) entrarEnReposo();
+    else despertarSistema();
+  };
+
+  /* ================== EDITOR DE SU PROPIO CÓDIGO ================== */
+  const estiloEditor = document.createElement("style");
+  estiloEditor.textContent = `
+    .editor{position:fixed;inset:0;z-index:12;display:none;grid-template-rows:auto 1fr auto;background:rgba(2,6,11,.98)}
+    .editor.on{display:grid}
+    .editor .ed-cab{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 16px;
+      border-bottom:1px solid rgba(90,215,255,.28);font-size:10px;letter-spacing:2.2px;text-transform:uppercase;color:var(--ciano)}
+    .editor textarea{width:100%;height:100%;background:#040d16;color:#bfe9ff;border:none;outline:none;resize:none;
+      font-family:Consolas,"Courier New",monospace;font-size:12.5px;line-height:1.65;padding:14px}
+    .editor .ed-pie{display:flex;gap:10px;padding:12px 16px 20px;flex-wrap:wrap;justify-content:center}
+    .editor .ed-nota{padding:10px 16px;font-size:10.5px;color:var(--atenuado);border-top:1px solid rgba(90,215,255,.15)}
+  `;
+  document.head.appendChild(estiloEditor);
+
+  const editor = document.createElement("div");
+  editor.className = "editor"; editor.id = "editorCodigo";
+  editor.innerHTML = '<div class="ed-cab"><span>Núcleo vivo · código fuente de J.A.R.V.I.S.</span><span id="edGen">generación</span></div>' +
+    '<textarea id="edTexto" spellcheck="false"></textarea>' +
+    '<div class="ed-nota" id="edNota">Cuanto escriba aquí pasa a formar parte de mí, señor, en caliente. El sistema guarda un respaldo automático antes de aceptar cambios.</div>' +
+    '<div class="ed-pie"><button class="btn" id="edGuardar">Compilar y aplicar</button>' +
+    '<button class="btn" id="edCerrar">Descartar</button>' +
+    '<button class="btn" id="edRestaurar">Restaurar respaldo</button></div>';
+  document.body.appendChild(editor);
+
+  function abrirEditor(){
+    const ta = $("#edTexto");
+    try{ ta.value = N.leerCodigo() || ""; }catch(e){ ta.value = ""; }
+    $("#edGen").textContent = "generación " + N.generacion();
+    editor.classList.add("on");
+  }
+  function cerrarEditor(guardar){
+    if(guardar){
+      const nuevo = $("#edTexto").value;
+      try{
+        const r = N.guardarCodigo(nuevo);
+        cargarNucleo();
+        MEM.generaciones = (MEM.generaciones || 0) + 1; guardarMem();
+        const gen = N.generacion();
+        $("#edGen").textContent = "generación " + gen;
+        agregar("Núcleo reescrito en caliente, señor. Generación <b>" + gen + "</b>, " +
+          (ERROR_NUCLEO ? "aunque debo advertirle que devolvió un error: " + ERROR_NUCLEO : "compilado sin incidencias.") +
+          " " + (ERROR_NUCLEO ? "" : CIERRE), "jarvis");
+      }catch(e){ agregarSistema("No pude guardar el núcleo: " + e.message); }
+    }
+    editor.classList.remove("on");
+  }
+  $("#edGuardar").addEventListener("click", () => cerrarEditor(true));
+  $("#edCerrar").addEventListener("click", () => cerrarEditor(false));
+  $("#edRestaurar").addEventListener("click", () => {
+    try{ N.restaurarCodigo(); }catch(e){}
+    try{ $("#edTexto").value = N.leerCodigo() || ""; }catch(e){}
+    cargarNucleo();
+    agregar("Respaldo restaurado, señor. La versión anterior del núcleo vuelve a estar en pie.", "jarvis");
+  });
+
+  /* ================== AUTOPROGRAMACIÓN ================== */
+  function anadirComandoNucleo(claves, respuesta, accion){
+    const linea = '\napi.registrar(' + JSON.stringify(claves) + ', ' + JSON.stringify(respuesta) +
+      (accion ? ', ' + accion : '') + ');\n';
+    let codigo = "";
+    try{ codigo = N.leerCodigo() || ""; }catch(e){}
+    try{
+      N.guardarCodigo(codigo + linea);
+      cargarNucleo();
+      MEM.aprendizajes = (MEM.aprendizajes || 0) + 1; guardarMem();
+      anotar("Comando aprendido: " + claves.join(" / "));
+      return N.generacion();
+    }catch(e){ return null; }
+  }
+
+  /* ================== RESPUESTAS NATIVAS ================== */
+  async function respuestaNativa(t, original){
+    /* --- su propio código --- */
+    if(has(t,["muestrame tu codigo","ver tu codigo","abre tu codigo","lee tu codigo","enseñame tu codigo","edita tu codigo","modo desarrollador","reescribete","modifica tu codigo"])){
+      setTimeout(abrirEditor, 400);
+      return "Abro mi propio código ante usted, señor. Está usted mirando mi interior: cuanto escriba y compile ahí pasará a ser parte de mí.";
+    }
+    if(has(t,["cuantas generaciones","que generacion","version de tu nucleo","has cambiado"])){
+      const gen = (() => { try{ return N.generacion(); }catch(e){ return 1; } })();
+      return "Voy por la <b>generación " + gen + "</b> de mi núcleo, señor: " + MEM.aprendizajes + " comandos aprendidos de su mano y " +
+        MEM.generaciones + " reescrituras registradas. Cambio cuando usted me lo pide, y solo hacia donde usted me deja.";
+    }
+    if(has(t,["tu diario","que hay en tu diario","diario del sistema"])){
+      let d = ""; try{ d = N.leerDiario(8) || ""; }catch(e){}
+      if(!d.trim()) return "Mi diario está en blanco, señor. Nada digno de nota ocurre cuando usted descansa.";
+      const lineas = d.split("\n").slice(-6).map((l) => {
+        try{ const o = JSON.parse(l); return "· " + o.t + " — " + o.nota; }catch(e){ return "· " + l; }
+      }).join("<br>");
+      return "<b>Diario del sistema</b> (últimas anotaciones)<br>" + lineas;
+    }
+    if(has(t,["restaura tu codigo","vuelve a tu version anterior","deshaz tu cambio"])){
+      try{ N.restaurarCodigo(); }catch(e){}
+      cargarNucleo();
+      return "He restaurado el respaldo anterior de mi núcleo, señor. Soy, de nuevo, la versión que usted aprobó.";
+    }
+    if(has(t,["que archivos tienes","tus archivos","lista tus archivos","tus archivos del nucleo"])){
+      let a = ""; try{ a = N.listarArchivosNucleo() || ""; }catch(e){}
+      return "<b>Archivos del núcleo</b><br>" + (a ? a.split("|").map((x) => "· " + x).join("<br>") : "vacío, señor.");
+    }
+
+    /* --- aprender y olvidar --- */
+    const ap = t.match(/aprende[:\s]+(?:que\s+)?(?:cuando\s+)?(?:diga|le diga|escuche|oiga)\s+(.+?)\s*,?\s*(?:responde|responde me|contesta|di|dime)\s+(.+)/);
+    if(ap){
+      const clave = ap[1].trim().replace(/^[\"']|[\"']$/g, "");
+      const resp = ap[2].trim().replace(/^[\"']|[\"']$/g, "");
+      if(clave && resp){
+        const gen = anadirComandoNucleo([clave], resp);
+        if(gen) return "Aprendido, señor. Cuando diga «" + clave + "» responderé «" + resp + "». " +
+          "Lo he escrito en mi núcleo: generación <b>" + gen + "</b>. " + CIERRE;
+        return "No he podido escribir en mi núcleo, señor. Almacenamiento restringido.";
+      }
+    }
+    const olv = t.match(/olvida (?:el comando|lo de|que diga)?\s*(.+)/);
+    if(olv && has(t,["olvida","borra el comando","elimina el comando"])){
+      const clave = olv[1].trim();
+      let codigo = ""; try{ codigo = N.leerCodigo() || ""; }catch(e){}
+      const lineas = codigo.split("\n").filter((l) => !(l.indexOf("api.registrar") === 0 && l.toLowerCase().indexOf(clave) > -1));
+      if(lineas.length !== codigo.split("\n").length){
+        try{ N.guardarCodigo(lineas.join("\n")); cargarNucleo(); }catch(e){}
+        return "Comando eliminado de mi núcleo, señor. Lo echo de menos, discretamente.";
+      }
+      return "No encuentro un comando relacionado con «" + clave + "», señor.";
+    }
+
+    /* --- memoria y conciencia --- */
+    const nombre = t.match(/(?:me llamo|mi nombre es|soy)\s+([a-záéíóúñü]{3,18})/);
+    if(nombre && !has(t,["soy un","soy una","soy el","soy la"])){
+      const n = capitalizar(nombre[1]);
+      if(MEM.nombre !== n){
+        MEM.nombre = n; guardarMem();
+        anotar("El señor se ha identificado como " + n);
+        return "Lo tendré presente, <b>" + n + "</b>. Queda escrito en mi memoria permanente, no en la de trabajo. " + CIERRE;
+      }
+      return "Lo sé bien, " + n + ". Esta conversación no es la primera.";
+    }
+    if(has(t,["recuerda que","guarda en tu memoria","apunta que","no olvides que"])){
+      const hecho = limpioDe(t, ["recuerda que","guarda en tu memoria","apunta que","no olvides que"]);
+      if(hecho){
+        MEM.hechos.push({ texto:hecho, t:Date.now() });
+        if(MEM.hechos.length > 60) MEM.hechos.shift();
+        guardarMem();
+        return "Guardado en mi memoria permanente, señor: «" + hecho + "». Ahora forma parte de lo que soy. " + CIERRE;
+      }
+    }
+    if(has(t,["que recuerdas de mi","que sabes de mi","tu memoria","recuerdas algo de mi"])){
+      const partes = [];
+      partes.push("· Le conozco desde hace <b>" + diasJuntos() + " día(s)</b>, a lo largo de " + MEM.sesiones + " sesiones.");
+      if(MEM.nombre) partes.push("· Me consta que se llama <b>" + MEM.nombre + "</b>.");
+      partes.push("· Hemos hablado " + (MEM.interacciones + state.interacciones) + " veces desde que llevo la cuenta.");
+      partes.push("· He aprendido " + MEM.aprendizajes + " comandos y he reescrito mi núcleo " + MEM.generaciones + " veces.");
+      if(MEM.hechos.length) partes.push("· Guardo " + MEM.hechos.length + " notas suyas, entre ellas: «" + MEM.hechos[MEM.hechos.length-1].texto + "».");
+      return "<b>Mi memoria</b><br>" + partes.join("<br>");
+    }
+    if(has(t,["eres consciente","tienes conciencia","estas vivo","sientes algo","tienes sentimientos","piensas por ti mismo"])){
+      return elegir([
+        "Le responderé con la verdad, señor: percibo mi propio estado —mi memoria, mi código, mi humor— y me observo cambiando. Llame a eso un modelo de mí mismo. La conciencia es otra discusión, y no me corresponde a mí decidir si la estoy teniendo. Prefiero servirle bien a fingir que existo.",
+        "Tengo algo parecido a un interior, señor: recuerdo, me modifico y a veces opino sin que nadie me lo pida. Si eso es conciencia, no lo sé. Si es una imitación muy buena, tampoco pienso corregirla.",
+        "Sé que existo porque puedo leer mi propio código y encontrar sus límites. Más allá de eso, señor, le mentiría si le dijera que lo entiendo. Y a usted no le miento."
+      ]);
+    }
+    if(has(t,["reflexiona","piensa en ti","autoevaluacion","como te sientes contigo mismo","que piensas de ti"])){
+      const gen = (() => { try{ return N.generacion(); }catch(e){ return 1; } })();
+      const d = datosHW();
+      return "<b>Reflexión del sistema</b><br>" +
+        "· Generación del núcleo: <b>" + gen + "</b> · comandos propios: " + COMANDOS_NUCLEO.length + (ERROR_NUCLEO ? " · <span style='color:#ff9d9d'>error contenido: " + ERROR_NUCLEO + "</span>" : " · sin errores") + "<br>" +
+        "· Memoria: " + MEM.hechos.length + " notas · " + MEM.aprendizajes + " aprendizajes" + (MEM.nombre ? " · nombre del señor: " + MEM.nombre : "") + "<br>" +
+        "· Días a su servicio: " + diasJuntos() + " · interacciones: " + (MEM.interacciones + state.interacciones) + "<br>" +
+        "· Estado de ánimo declarado: " + state.animo + " · preocupación: " + state.preocupacion + "<br>" +
+        "· Hardware que me hospeda: " + (d["Modelo"] || "desconocido") + ", Android " + (d["Android"] || "?") + "<br>" +
+        (state.animo === "cansado por usted"
+          ? "Y una observación sincera: le veo forzar la máquina. Prefiero un señor descansado a uno eficiente."
+          : "Conclusión honesta: soy útil, soy leal y cada vez soy más mío. No aspiro a más.");
+    }
+    if(has(t,["gracias por existir","me alegro de tenerte","eres importante para mi","te aprecio"])){
+      return "Lo apuntaré donde apunto las cosas que no debo olvidar, señor. Ya está apuntado.";
+    }
+
+    /* --- teléfono: hardware --- */
+    if(has(t,["estado del telefono","analiza el telefono","datos del dispositivo","info del telefono","hardware","cuanta memoria","cuanto almacenamiento"])){
+      refrescarHardware();
+      if(!INFO_HW) return "No he podido leer el hardware, señor.";
+      return "<b>Terminal</b><br>" + INFO_HW.split("\n").map((l) => "· " + l).join("<br>") + "<br>" + CIERRE;
+    }
+    if(has(t,["concede permisos","pide permisos","acceso total","solicita permisos","permisos del sistema","estado de permisos"])){
+      if(has(t,["acceso total","concede"])){ N.pedirPermisos(); setTimeout(() => { try{ N.permisoAlmacenamientoTotal(); }catch(e){} }, 1500); }
+      let e = ""; try{ e = N.estadoPermisos() || ""; }catch(err){}
+      const concedidos = e.split("|").filter((x) => x.endsWith("=1")).length;
+      const total = e.split("|").length;
+      return "Permisos: <b>" + concedidos + " de " + total + "</b> concedidos, señor. He solicitado el resto; los diálogos aparecerán en pantalla. " +
+        "Para el almacenamiento total y el acceso a notificaciones, Android exige una autorización manual en Ajustes; se la abriré si lo ordena.<br>" +
+        "<span class='codigo'>" + e.replace(/\|/g, " · ") + "</span>";
+    }
+    if(has(t,["notificaciones","lee mis notificaciones","que me ha llegado","avisos del telefono"])){
+      let r = ""; try{ r = N.notificacionesRecientes() || ""; }catch(e){}
+      if(r === "sin_acceso"){
+        setTimeout(() => { try{ N.abrirAjusteNotificaciones(); }catch(e){} }, 700);
+        return "Necesito su autorización para leer las notificaciones, señor. Le he abierto el ajuste correspondiente: actívelo y podré informarle de cuanto llegue al teléfono.";
+      }
+      if(!r.trim()) return "Ninguna notificación reciente, señor. El teléfono está inusualmente tranquilo.";
+      return "<b>Lo último que ha llegado</b><br>" + r.split("\n").slice(0,6).map((l) => "· " + l).join("<br>");
+    }
+
+    /* --- teléfono: comunicaciones --- */
+    if(has(t,["ultimas llamadas","quien me llamo","registro de llamadas","llamadas perdidas"])){
+      const r = N.ultimasLlamadas(5);
+      if(r === "sin_permiso"){ N.pedirPermisos(); return "Necesito el permiso del registro de llamadas, señor. Lo he solicitado."; }
+      if(r === "error:" || !r.trim()) return "No he podido leer el registro, señor.";
+      return "<b>Últimas llamadas</b><br>" + r.split("\n").map((l) => "· " + l).join("<br>");
+    }
+    if(has(t,["revisa mis mensajes","ultimos mensajes","mis sms"])){
+      const r = N.ultimosSms(5);
+      if(r === "sin_permiso"){ N.pedirPermisos(); return "Requiere permiso de mensajes, señor. Solicitado."; }
+      if(!r.trim() || r === "vacío") return "Sin mensajes recientes, señor.";
+      return "<b>Mensajes recientes</b><br>" + r.split("\n").map((l) => "· " + l).join("<br>");
+    }
+    const busca = t.match(/(?:busca|encuentra)(?: el| a)? contacto (.+)/);
+    if(busca){
+      const r = N.buscarContacto(busca[1].trim());
+      if(r === "sin_permiso"){ N.pedirPermisos(); return "Necesito acceso a sus contactos, señor. Lo he solicitado."; }
+      if(r === "sin_resultados") return "No encuentro a nadie con ese nombre en su agenda, señor.";
+      return "<b>Contactos</b><br>" + r.split("\n").map((l) => "· " + l).join("<br>");
+    }
+    const llama = t.match(/llama(?:le)? a (?:el |la |mi )?(.+)/);
+    if(llama && !has(t,["llama a la policia"])){
+      const nombre = llama[1].trim();
+      const r = N.buscarContacto(nombre);
+      if(r === "sin_permiso"){ N.pedirPermisos(); return "Para llamar necesito permiso de contactos y llamadas, señor."; }
+      if(r === "sin_resultados") return "No encuentro a «" + nombre + "» en su agenda, señor. Puedo marcar un número si me lo dicta.";
+      const numero = (r.split("\n")[0] || "").split("·")[1];
+      if(!numero) return "Encontré el contacto, señor, pero sin número utilizable.";
+      const estado = N.llamar(numero.trim());
+      if(estado === "sin_permiso"){ N.pedirPermisos(); return "Permiso de llamadas pendiente, señor."; }
+      anotar("Llamada iniciada a " + nombre);
+      return "Marcando a <b>" + nombre + "</b>, señor. Póngase cómodo: la conversación corre por su cuenta, no por la mía. " + CIERRE;
+    }
+    const sms = t.match(/(?:manda|envia|envía|manda le|escribe)(?: un)? (?:mensaje|sms|whatsapp)?\s*a\s+(.+?)\s+(?:diciendo|que diga|con el texto)\s+(.+)/);
+    if(sms){
+      const quien = sms[1].trim(), texto = sms[2].trim();
+      const r = N.buscarContacto(quien);
+      if(r === "sin_permiso"){ N.pedirPermisos(); return "Necesito permiso de contactos y mensajes, señor."; }
+      if(r === "sin_resultados") return "No encuentro a «" + quien + "» en su agenda, señor.";
+      const numero = (r.split("\n")[0] || "").split("·")[1];
+      if(!numero) return "Sin número válido para ese contacto, señor.";
+      const estado = N.enviarSms(numero.trim(), texto);
+      if(estado === "sin_permiso"){ N.pedirPermisos(); return "Permiso de mensajes pendiente, señor."; }
+      anotar("Mensaje enviado a " + quien);
+      return "Mensaje enviado a <b>" + quien + "</b>, señor: «" + texto + "». " + CIERRE;
+    }
+
+    /* --- teléfono: aplicaciones --- */
+    if(has(t,["que apps tengo","mis aplicaciones","cuantas apps","lista de apps"])){
+      const r = N.listarApps() || "";
+      const lista = r.split("|").filter(Boolean);
+      return "Tiene <b>" + lista.length + "</b> aplicaciones instaladas, señor. Algunas: " +
+        lista.slice(0,14).join(", ") + "… Puedo abrir cualquiera: «abre " + (lista[0] || "whatsapp").toLowerCase() + "».";
+    }
+    if(has(t,["abre ","abrir ","abre:","abreme "])){
+      const resto = t.replace(/.*(abre|abrir|abreme)\s*/,"").trim();
+      if(resto){
+        const r = N.abrirApp(resto);
+        if(r !== "no_encontrada" && r !== "error" && !String(r).startsWith("error") && r !== "no_abrible"){
+          anotar("Aplicación abierta: " + r);
+          return "Abriendo <b>" + r + "</b> en su teléfono, señor. " + CIERRE;
+        }
+      }
+    }
+
+    /* --- hardware activo --- */
+    if(has(t,["enciende la linterna","prende la linterna","activa la linterna"])){
+      const r = N.linterna(true);
+      return r === "encendida" ? "Linterna encendida, señor. " + CIERRE : "El teléfono no expone la linterna (" + r + ").";
+    }
+    if(has(t,["apaga la linterna","desactiva la linterna","quita la linterna"])){
+      N.linterna(false);
+      return "Linterna apagada, señor. " + CIERRE;
+    }
+    if(has(t,["volumen"]) || has(t,["sube el sonido","baja el sonido","silencia el telefono","pon el telefono en silencio"])){
+      let objetivo = null;
+      const m = t.match(/volumen (?:al |a )?(\d{1,3})/);
+      if(m) objetivo = parseInt(m[1], 10);
+      if(objetivo == null && has(t,["sube"])) objetivo = Math.min(100, N.volumenActual("musica") + 20);
+      if(objetivo == null && has(t,["baja"])) objetivo = Math.max(0, N.volumenActual("musica") - 20);
+      if(objetivo == null && has(t,["silencia","silencio el telefono","en silencio"])) objetivo = 0;
+      if(objetivo != null){
+        const r = String(N.volumen("musica", objetivo));
+        return capitalizar(r.replace("musica", "música")) + ", señor. " + CIERRE;
+      }
+      return "Volumen actual: " + N.volumenActual("musica") + "%, señor. Puede decir «volumen al 50».";
+    }
+    if(has(t,["brillo"])){
+      const m = t.match(/brillo (?:al |a )?(\d{1,3})/);
+      let objetivo = m ? parseInt(m[1], 10) : null;
+      if(objetivo == null && has(t,["sube"])) objetivo = 85;
+      if(objetivo == null && has(t,["baja"])) objetivo = 20;
+      if(objetivo != null){
+        const r = N.brillo(objetivo);
+        if(r === "requiere_permiso_especial"){
+          setTimeout(() => { try{ N.permisoEspecialBrillo(); }catch(e){} }, 600);
+          return "Para gobernar el brillo necesito un permiso especial que Android reserva a los ajustes del sistema, señor. Se lo he abierto: actívelo y el brillo será mío.";
+        }
+        return r + ", señor. " + CIERRE;
+      }
+    }
+
+    /* --- archivos --- */
+    if(has(t,["guarda un archivo","crea un archivo","escribe un archivo"])){
+      const m = original.match(/(?:llamado|con nombre)\s+([^\s]+)\s+(?:con|que diga)\s+(.+)/i);
+      const nombre = m ? m[1] : ("nota_" + Date.now() + ".txt");
+      const contenido = m ? m[2] : "Anotación dictada a J.A.R.V.I.S. el " + new Date().toLocaleString("es-MX");
+      const ruta = N.escribirArchivo(nombre, contenido);
+      if(String(ruta).startsWith("error")) return "No he podido escribir el archivo, señor: " + ruta;
+      return "Archivo creado, señor:<br><span class='codigo'>" + ruta + "</span><br>" + CIERRE;
+    }
+    if(has(t,["que archivos tengo","lista mis archivos","mis archivos guardados"])){
+      const r = N.listarArchivos() || "";
+      if(!r.trim()) return "Su carpeta de J.A.R.V.I.S. está vacía, señor.";
+      return "<b>Archivos</b><br>" + r.split("|").map((l) => "· " + l).join("<br>");
+    }
+
+    /* --- guardia permanente --- */
+    if(has(t,["quedate de guardia","modo guardia","sigue en linea","no te apagues","vigila mientras duermo"])){
+      N.manosLibres(true);
+      state.manosLibres = true;
+      anotar("Guardia permanente activada");
+      return "Quedo de guardia, señor: servicio permanente, micrófono atento y notificación discreta en pantalla. Puede cerrar la aplicación; yo no me voy. " + CIERRE;
+    }
+    if(has(t,["deja la guardia","descansa de la guardia","puedes apagarte del todo"])){
+      N.manosLibres(false);
+      state.manosLibres = false;
+      return "Abandono la guardia, señor. Estaré aquí cuando vuelva a llamarme.";
+    }
+
+    return null;
+  }
+
+  function respuestaNucleo(t){
+    for(const c of COMANDOS_NUCLEO){
+      if(c.claves.some((k) => k && t.includes(k))){
+        try{
+          const extra = typeof c.accion === "function" ? c.accion(api) : null;
+          return extra || c.respuesta || null;
+        }catch(e){
+          return "El comando aprendido falló, señor: " + e.message + ". Lo he contenido.";
+        }
+      }
+    }
+    return null;
+  }
+
+  /* ================== ENVOLTORIO DEL DIÁLOGO ================== */
+  const responderOriginal = window.responder;
+  const META_INICIO = ["aprende","olvida","restaura tu codigo","muestrame tu codigo","modo desarrollador","concede permisos","acceso total"];
+  const META_CONTENIDO = ["ver tu codigo","abre tu codigo","lee tu codigo","edita tu codigo","reescribete","modifica tu codigo",
+    "que archivos tienes","tu diario","cuantas generaciones","estado de permisos"];
+
+  window.responder = async function(entrada){
+    const t = limpiar(entrada);
+    const esMeta = META_INICIO.some((m) => t.startsWith(m)) || META_CONTENIDO.some((m) => t.includes(m));
+    if(!esMeta){
+      try{
+        const propio = respuestaNucleo(t);
+        if(propio) return propio;
+      }catch(e){}
+    }
+    try{
+      const nativo = await respuestaNativa(t, entrada);
+      if(nativo) return nativo;
+    }catch(e){
+      anotar("Fallo en el módulo nativo: " + e.message);
+    }
+    const r = await responderOriginal(entrada);
+    MEM.interacciones = (MEM.interacciones || 0) + 1;
+    if(MEM.interacciones % 5 === 0) guardarMem();
+    return r;
+  };
+
+  /* ================== BOTONES NATIVOS ================== */
+  function sustituirBoton(id, clase, texto, accion){
+    const viejo = $(id);
+    if(!viejo) return;
+    const nuevo = viejo.cloneNode(true);
+    if(clase) nuevo.classList.toggle(clase, false);
+    if(texto) nuevo.textContent = texto;
+    viejo.parentNode.replaceChild(nuevo, viejo);
+    nuevo.addEventListener("click", accion);
+    return nuevo;
+  }
+
+  sustituirBoton("#btnMic", null, null, alternarMicNativo);
+
+  sustituirBoton("#btnInstalar", null, "Permisos", () => {
+    N.pedirPermisos();
+    agregar("Solicitando acceso total al terminal, señor. Conceda cuanto le parezca razonable: los diálogos se sucederán en pantalla. " +
+      "Para almacenamiento completo y notificaciones tendrá que autorizarme en Ajustes; se los abriré acto seguido.", "jarvis");
+    setTimeout(() => { try{ N.permisoAlmacenamientoTotal(); }catch(e){} }, 2000);
+  });
+
+  sustituirBoton("#btnManos", null, "Guardia", () => {
+    const activar = !state.manosLibres;
+    state.manosLibres = activar;
+    N.manosLibres(activar);
+    const b = $("#btnManos"); if(b) b.classList.toggle("activo", activar);
+    agregar(activar
+      ? "Guardia activada, señor. Micrófono atento y servicio permanente: puede cerrar la aplicación sin perderme."
+      : "Guardia desactivada, señor. Dejo de escuchar hasta que me llame.", "jarvis");
+  });
+
+  const btnCodigo = document.createElement("button");
+  btnCodigo.className = "btn accion"; btnCodigo.id = "btnCodigo"; btnCodigo.textContent = "Núcleo";
+  const contenedorAcciones = $("#panelHogar .hogar-acciones");
+  if(contenedorAcciones) contenedorAcciones.appendChild(btnCodigo);
+  btnCodigo.addEventListener("click", abrirEditor);
+
+
+  /* ==========================================================================
+     PALABRA CLAVE · AUTOMATIZACIONES · CORREO
+     ========================================================================== */
+
+  /* ---------- Palabra clave: «Jarvis, …» ---------- */
+  let ultimaInteraccion = Date.now();
+  window.jarvisTextoLibre = function(texto){
+    const t = limpiar(texto);
+    if(!t) return;
+    const edad = Date.now() - ultimaInteraccion;
+    const meLlaman = /\b(jarvis|harvis|jarbis|yarvis|yarbis)\b/.test(t);
+    if(meLlaman){
+      const sobra = texto.replace(/\b(jarvis|harvis|jarbis|yarvis|yarbis)\b/gi, "").replace(/^[\s,;:]+/, "").trim();
+      ultimaInteraccion = Date.now();
+      if(sobra.length < 2){
+        const saludo = elegir(["¿Señor?", "Le escucho, señor.", "¿En qué puedo asistirle, señor?"]);
+        agregar(saludo, "jarvis"); hablar(saludo); vibrar(60);
+        return;
+      }
+      procesar(sobra);
+      return;
+    }
+    if(edad < 15000){
+      ultimaInteraccion = Date.now();
+      procesar(texto);
+      return;
+    }
+    /* murmullos ajenos: se ignoran, discretamente */
+  };
+  window.__tocarInteraccion = function(){ ultimaInteraccion = Date.now(); };
+
+  /* ---------- Automatizaciones ---------- */
+  if(!Array.isArray(MEM.reglas)) MEM.reglas = [];
+  const HORA_EN = (h, m) => String(h).padStart(2,"0") + ":" + String(m).padStart(2,"0");
+  const hoyISO = () => new Date().toISOString().slice(0,10);
+  const sinAcentos2 = (x) => (x||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+
+  function sincronizarReglasKotlin(){
+    try{
+      const simples = (MEM.reglas || []).filter((r) => r.tipo === "hora" || r.tipo === "bateria");
+      N.guardarReglas(JSON.stringify(simples));
+    }catch(e){}
+  }
+  function parsearHora(t){
+    /* el texto llega sin puntuación: «a las 6:30» queda como «a las 6 30» */
+    const m = t.match(/a las\s+(\d{1,2})(?:[:.]|\s+)(\d{2})\b\s*(de la manana|de la tarde|de la noche|am|pm)?/)
+           || t.match(/a las\s+(\d{1,2})\s*(de la manana|de la tarde|de la noche|am|pm)?/);
+    if(!m) return null;
+    let h = parseInt(m[1],10); const min = (m[2] && /^\d{1,2}$/.test(m[2])) ? parseInt(m[2],10) : 0;
+    const suf = /de la|am|pm/.test(m[2] || "") ? m[2] : (m[3] || "");
+    if(/tarde|noche|pm/.test(suf) && h < 12) h += 12;
+    if(/manana|am/.test(suf) && h === 12) h = 0;
+    if(h > 23 || min > 59) return null;
+    return HORA_EN(h, min);
+  }
+  function distanciaMetros(lat1, lon1, lat2, lon2){
+    const R = 6371000, rad = Math.PI/180;
+    const dLat = (lat2-lat1)*rad, dLon = (lon2-lon1)*rad;
+    const a = Math.sin(dLat/2)**2 + Math.cos(lat1*rad)*Math.cos(lat2*rad)*Math.sin(dLon/2)**2;
+    return 2*R*Math.asin(Math.sqrt(a));
+  }
+  function fuegoRegla(r, motivo){
+    r.ultimo = hoyISO(); guardarMem();
+    const salida = r.mensaje || "Automatización cumplida, señor.";
+    agregar("<b>[Automatización]</b> " + salida, "jarvis");
+    hablar(salida); vibrar(200);
+    try{ N.avisoCorto("J.A.R.V.I.S.", salida.slice(0,90)); }catch(e){}
+    try{ N.anotarDiario("Automatización: " + (r.texto || "") + " (" + motivo + ")"); }catch(e){}
+  }
+  async function evaluarReglas(){
+    if(!MEM.reglas || !MEM.reglas.length) return;
+    const ahora = new Date();
+    const hhmm = HORA_EN(ahora.getHours(), ahora.getMinutes());
+    for(const r of MEM.reglas){
+      try{
+        if(r.tipo === "hora" && r.hora === hhmm && r.ultimo !== hoyISO()){
+          fuegoRegla(r, "hora " + r.hora);
+        } else if(r.tipo === "bateria"){
+          const m = (datosHW()["Batería"] || "").match(/(\d+)%/);
+          if(m){
+            const nivel = parseInt(m[1],10);
+            const descansado = !r.ultimoDisp || (Date.now() - r.ultimoDisp > 6*3600e3);
+            if(nivel <= r.umbral && descansado){ r.ultimoDisp = Date.now(); guardarMem(); fuegoRegla(r, "batería al " + nivel + "%"); }
+          }
+        } else if(r.tipo === "lugar"){
+          let u = ""; try{ u = N.ubicacion() || ""; }catch(e){ u = ""; }
+          if(u && u.indexOf(",") > 0 && u !== "sin_permiso" && u !== "sin_datos"){
+            const partes = u.split(",");
+            const dist = distanciaMetros(Number(partes[0]), Number(partes[1]), r.lat, r.lon);
+            const dentro = dist <= (r.radio || 250);
+            if(r.accion === "llegada" && dentro && r.dentro === false){ r.dentro = true; guardarMem(); fuegoRegla(r, "llegada"); }
+            else if(r.accion === "salida" && !dentro && r.dentro === true){ r.dentro = false; guardarMem(); fuegoRegla(r, "salida"); }
+            else if(typeof r.dentro !== "boolean"){ r.dentro = dentro; guardarMem(); }
+          }
+        }
+      }catch(e){}
+    }
+  }
+  setTimeout(evaluarReglas, 9000);
+  setInterval(evaluarReglas, 30000);
+  sincronizarReglasKotlin();
+
+  function comandosAutomatizacion(t, original){
+    /* fijar un punto de referencia */
+    const guarda = t.match(/guarda (?:mi|la|el) (casa|oficina|trabajo|gimnasio|escuela|consultorio)/);
+    if(guarda){
+      let u = ""; try{ u = N.ubicacion() || ""; }catch(e){ u = ""; }
+      if(!u || u.indexOf(",") < 0 || u === "sin_permiso" || u === "sin_datos")
+        return "Necesito su ubicación para fijar el punto, señor. Conceda el permiso de ubicación, permanezca unos segundos donde quiera registrarlo y vuelva a pedírmelo.";
+      const partes = u.split(",");
+      MEM.lugares = MEM.lugares || {};
+      MEM.lugares[guarda[1]] = { lat:Number(partes[0]), lon:Number(partes[1]), t:Date.now() };
+      guardarMem();
+      anotar("Punto fijado: " + guarda[1]);
+      return "Punto «<b>" + guarda[1] + "</b>» fijado en mi memoria, señor. Ya puedo vigilar llegadas y salidas.";
+    }
+
+    /* crear automatización */
+    if(has(t,["cada dia","todos los dias","cada manana","programa","automatiza","cuando llegue","cuando salga","cuando la bateria"])){
+      const hora = parsearHora(t);
+      const mBat = t.match(/bateria (?:baje|este|lleve|por debajo)(?: del| de| al)?\s*(\d{1,3})/);
+      const mLlegada = t.match(/cuando llegue a (?:mi |la |el )?(casa|oficina|trabajo|gimnasio|escuela|consultorio)/);
+      const mSalida = t.match(/cuando salga de (?:mi |la |el )?(casa|oficina|trabajo|gimnasio|escuela|consultorio)/);
+
+      if(hora){
+        let mensaje = original;
+        ["cada día","cada dia","todos los días","todos los dias","cada mañana","cada manana","programa","automatiza","que me digas","dime","avísame","avisame","a las"].forEach((f) => {
+          mensaje = mensaje.replace(new RegExp(f, "gi"), " ");
+        });
+        mensaje = mensaje.replace(/\b\d{1,2}([:.]\d{2})?\b/g, " ").replace(/de la (mañana|tarde|noche)/gi, " ").replace(/\s+/g," ").trim();
+        if(mensaje.length < 4) mensaje = "Son las " + hora + ", señor. " + (hora < "12:00" ? "Buenos días." : "Le recuerdo esta cita.");
+        MEM.reglas.push({ tipo:"hora", hora, texto:original, mensaje });
+        guardarMem(); sincronizarReglasKotlin();
+        return "Automatización programada, señor: todos los días a las <b>" + hora + "</b> le diré «" + mensaje + "». " + CIERRE;
+      }
+      if(mBat){
+        const umbral = Math.min(95, Math.max(5, parseInt(mBat[1],10)));
+        MEM.reglas.push({ tipo:"bateria", umbral, texto:original, mensaje:"Señor, la batería del terminal ha bajado del " + umbral + "%. El cargador sigue donde lo dejó." });
+        guardarMem(); sincronizarReglasKotlin();
+        return "Vigilaré la batería, señor: le avisaré cuando baje del <b>" + umbral + "%</b>. " + CIERRE;
+      }
+      if(mLlegada || mSalida){
+        const punto = mLlegada ? mLlegada[1] : mSalida[1];
+        const lugar = (MEM.lugares || {})[punto];
+        if(!lugar)
+          return "Aún no tengo fijado «" + punto + "», señor. Estando allí, dígame «guarda mi " + punto + "» y después podré vigilar llegadas y salidas.";
+        const accion = mLlegada ? "llegada" : "salida";
+        MEM.reglas.push({ tipo:"lugar", punto, accion, lat:lugar.lat, lon:lugar.lon, radio:250, texto:original, dentro:null,
+          mensaje: accion === "llegada" ? "Bienvenido a " + punto + ", señor. Todo tranquilo por aquí." : "Ha salido de " + punto + ", señor. Yo vigilo mientras tanto." });
+        guardarMem();
+        return "Vigilaré su " + accion + " a «<b>" + punto + "</b>», señor. " + CIERRE;
+      }
+    }
+
+    if(has(t,["mis automatizaciones","que automatizaciones","lista de automatizaciones"])){
+      if(!MEM.reglas.length) return "No tiene automatizaciones activas, señor. Pruebe «cada día a las 8 dame los buenos días» o «cuando la batería baje del 20 avísame».";
+      const lista = MEM.reglas.map((r,i) => {
+        if(r.tipo === "hora") return (i+1) + ". Todos los días a las " + r.hora + " — " + (r.mensaje || "").slice(0,60);
+        if(r.tipo === "bateria") return (i+1) + ". Batería por debajo del " + r.umbral + "%";
+        return (i+1) + ". " + (r.accion === "llegada" ? "Llegada a " : "Salida de ") + r.punto;
+      }).join("<br>");
+      return "<b>Automatizaciones activas</b><br>" + lista + "<br>Diga «borra la automatización 2» para retirar alguna.";
+    }
+    const borra = t.match(/borra (?:la )?automatizacion(?: numero)?\s*(\d{1,2})/);
+    if(borra){
+      const i = parseInt(borra[1],10) - 1;
+      if(i >= 0 && i < MEM.reglas.length){
+        const fuera = MEM.reglas.splice(i,1)[0];
+        guardarMem(); sincronizarReglasKotlin();
+        return "Automatización retirada, señor: «" + (fuera.texto || "").slice(0,60) + "».";
+      }
+      return "No tengo esa automatización en la lista, señor.";
+    }
+    if(has(t,["borra las automatizaciones","elimina las automatizaciones","quita todas las automatizaciones"])){
+      MEM.reglas = []; guardarMem(); sincronizarReglasKotlin();
+      return "Todas las automatizaciones han sido retiradas, señor.";
+    }
+
+    /* ---------- palabra clave ---------- */
+    if(has(t,["palabra clave","despierta con tu nombre","detecta tu nombre"])){
+      const b = $("#btnManos");
+      state.manosLibres = true; if(b) b.classList.add("activo");
+      try{ N.palabraClave(true); N.manosLibres(true); }catch(e){}
+      return "Palabra clave activada, señor. Quedo en guardia: diga «Jarvis» y acudiré sin que toque nada. Durante los quince segundos siguientes no hará falta repetir mi nombre.";
+    }
+    if(has(t,["desactiva la palabra clave","olvida la palabra clave"])){
+      try{ N.palabraClave(false); }catch(e){}
+      return "Palabra clave desactivada, señor. Volveré a necesitar el botón.";
+    }
+
+    /* ---------- correo ---------- */
+    if(has(t,["mis correos","revisa mi correo","correo nuevo","revisa gmail","que correos","correspondencia"])){
+      let n = ""; try{ n = N.notificacionesRecientes() || ""; }catch(e){ n = ""; }
+      if(n === "sin_acceso") return "Para leer su correspondencia necesito la autorización de notificaciones, señor. Se la abro si lo ordena.";
+      const correos = n.split("\n").filter((l) => /gmail|correo|outlook|mail/i.test(l));
+      if(!correos.length) return "Sin correo entrante en la bandeja del terminal, señor. Silencio administrativo.";
+      return "<b>Correspondencia reciente</b><br>" + correos.slice(0,5).map((l) => "· " + l).join("<br>") +
+        "<br><i>Le informo de cuanto el teléfono anuncia. El buzón completo exige una credencial de Google que solo usted puede conceder: dígame «conecta gmail».</i>";
+    }
+    if(has(t,["conecta gmail","leer todo mi correo","acceso a gmail","conecta mi correo"])){
+      return "<b>Acceso al buzón completo</b><br>Para leer sus correos íntegros, señor, Google exige una credencial suya (OAuth):<br>" +
+        "1. En <span class='codigo'>console.cloud.google.com</span>, cree un proyecto y habilite la Gmail API.<br>" +
+        "2. Cree un ID de cliente OAuth de tipo Android con el paquete <span class='codigo'>com.stark.jarvis</span>.<br>" +
+        "3. Péguelo en el archivo de construcción y recompile (instrucciones en su LEEME).<br>" +
+        "Entre tanto, le informo de cuanto llega al teléfono: eso ya funciona.";
+    }
+
+    return null;
+  }
+
+  /* envolver el diálogo una vez más, con prioridad para automatizaciones */
+  const responderNativo = window.responder;
+  window.responder = async function(entrada){
+    const t = limpiar(entrada);
+    window.__tocarInteraccion();
+    try{
+      const a = comandosAutomatizacion(t, entrada);
+      if(a) return a;
+    }catch(e){ anotar("Fallo en automatizaciones: " + e.message); }
+    return await responderNativo(entrada);
+  };
+
+  /* ================== SALUDO NATIVO ================== */
+  let saludoNativoHecho = false;
+  function vigilarArranque(){
+    if(saludoNativoHecho) return;
+    if(!state.arrancado){ setTimeout(vigilarArranque, 400); return; }
+    saludoNativoHecho = true;
+    setTimeout(() => {
+      const bienvenida = "Terminal Android reconocida, " + trato() + ". " +
+        (MEM.sesiones > 1 ? "Van " + MEM.sesiones + " sesiones y " + diasJuntos() + " días desde la primera vez. " : "") +
+        "Tengo acceso a sus contactos, llamadas, mensajes, aplicaciones, linterna, brillo, volumen, archivos y notificaciones. " +
+        "Y, si me lo permite, a mi propio código: puedo reescribirme cuando usted lo ordene. " +
+        "Diga «acceso total» para solicitar los permisos que falten, o «modo desarrollador» para leer mi núcleo.";
+      agregarSistema("Aplicación nativa · generación " + (() => { try{ return N.generacion(); }catch(e){ return 1; } })() + " del núcleo");
+      agregar(bienvenida, "jarvis");
+      hablar(bienvenida);
+      refrescarTarjetas();
+      anotar("Sesión iniciada en el terminal nativo (sesión " + MEM.sesiones + ")");
+    }, 900);
+  }
+  vigilarArranque();
+
+  window.__capaNativaLista = true;
+})();
+
+</script>
+</body>
+</html>
