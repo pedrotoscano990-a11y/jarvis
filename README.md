@@ -103,11 +103,24 @@ bash SUBIR-A-GITHUB.sh
 powershell -ExecutionPolicy Bypass -File SUBIR-A-GITHUB.ps1
 ```
 
-El script le pedirá su usuario de GitHub y el nombre del repositorio, abrirá el navegador para crearlo y empujará el contenido. Si tiene instalado [GitHub CLI](https://cli.github.com) y ya se autenticó (`gh auth login`), **lo hace aún más solo**: crea el repositorio *y* activa Pages automáticamente.
+El script pregunta sus datos **una sola vez** (usuario y nombre del repositorio), los guarda en `mis-datos.txt` y a partir de ahí trabaja sin molestarle. También puede dárselos de entrada:
+
+```bash
+bash SUBIR-A-GITHUB.sh TU-USUARIO jarvis
+```
+
+Si tiene instalado [GitHub CLI](https://cli.github.com) y ya se autenticó (`gh auth login`), **lo hace aún más solo**: crea el repositorio *y* activa Pages automáticamente, sin abrir el navegador ni pedirle nada.
 
 Después de subirlo, un último clic en GitHub:
 **Settings → Pages → Source: `Deploy from a branch` → `main` / `(root)` → Save**
 En un minuto: `https://TU-USUARIO.github.io/TU-REPO/`
+
+### Sus direcciones (cuando lo suba)
+
+| | Dirección |
+|---|---|
+| Repositorio | `https://github.com/TU-USUARIO/jarvis` |
+| Aplicación web (tras activar Pages) | `https://TU-USUARIO.github.io/jarvis/` |
 
 ### A mano, si lo prefiere
 ```bash

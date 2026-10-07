@@ -2,7 +2,9 @@
 # ═══════════════════════════════════════════════════════════════════════
 #   J.A.R.V.I.S. — Traslado del sistema a GitHub
 #
-#   Uso:      bash SUBIR-A-GITHUB.sh
+#   Uso:      bash SUBIR-A-GITHUB.sh  [usuario] [repositorio]
+#             La primera vez preguntará sus datos y los guardará en
+#             «mis-datos.txt»: las siguientes veces ya no pregunta nada.
 #   Requiere: git instalado.
 #   Opcional: GitHub CLI («gh») para crear el repositorio y activar Pages
 #             sin salir de la terminal  →  https://cli.github.com
@@ -17,6 +19,27 @@ O(){ printf '\033[33m%s\033[0m\n' "$*"; }   # oro   — advertencia
 E(){ printf '\033[31m%s\033[0m\n' "$*" >&2; } # rojo  — error
 
 C "J.A.R.V.I.S.: iniciando el traslado a GitHub, señor."
+
+# ───────────── 0. Sus datos (se guardan para no volver a preguntar) ─────────────
+DATOS="mis-datos.txt"
+USUARIO=""; NOMBRE=""
+if [ -f "$DATOS" ]; then
+  USUARIO=$(sed -n 's/^usuario=//p' "$DATOS" | head -1)
+  NOMBRE=$(sed -n 's/^repositorio=//p' "$DATOS" | head -1)
+fi
+if [ -z "$USUARIO" ]; then
+  echo
+  read -r -p "Su usuario de GitHub: " USUARIO
+  [ -z "$USUARIO" ] && { E "Sin usuario no puedo continuar, señor."; exit 1; }
+  read -r -p "Nombre del repositorio [${NOMBRE:-jarvis}]: " _n
+  NOMBRE="${_n:-${NOMBRE:-jarvis}}"
+  printf 'usuario=%s\nrepositorio=%s\n' "$USUARIO" "$NOMBRE" > "$DATOS"
+  C "Datos guardados en $DATOS (podrá editarlos cuando quiera)."
+fi
+[ -z "$NOMBRE" ] && NOMBRE="jarvis"
+
+if [ -n "${1:-}" ]; then USUARIO="$1"; fi
+if [ -n "${2:-}" ]; then NOMBRE="$2"; fi
 
 command -v git >/dev/null 2>&1 || {
   E "No encuentro git. Instálelo desde https://git-scm.com y vuelva a intentarlo, señor."
@@ -48,12 +71,6 @@ git branch -M main >/dev/null 2>&1 || true
 
 # ───────────── 2. Camino automático (GitHub CLI) ─────────────
 if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
-  NOMBRE="${1:-}"
-  if [ -z "$NOMBRE" ]; then
-    read -r -p "Nombre del repositorio [jarvis]: " NOMBRE
-    [ -z "$NOMBRE" ] && NOMBRE="jarvis"
-  fi
-
   O "Creando el repositorio público «$NOMBRE» y empujando los archivos…"
   gh repo create "$NOMBRE" --public --source=. --remote=origin --push
 
@@ -77,15 +94,6 @@ fi
 
 # ───────────── 3. Camino guiado (sin gh) ─────────────
 O "No detecto GitHub CLI autenticado. Seguimos por el camino guiado, señor."
-echo
-
-read -r -p "Su usuario de GitHub: " USUARIO
-if [ -z "$USUARIO" ]; then
-  E "Sin usuario no puedo continuar, señor."
-  exit 1
-fi
-read -r -p "Nombre del repositorio [jarvis]: " NOMBRE
-[ -z "$NOMBRE" ] && NOMBRE="jarvis"
 
 git remote remove origin >/dev/null 2>&1 || true
 git remote add origin "https://github.com/$USUARIO/$NOMBRE.git"

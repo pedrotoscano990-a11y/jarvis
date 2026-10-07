@@ -1,5 +1,5 @@
 build/
 .gradle/
 local.properties
-.DS_Store
-Thumbs.db
+mis-datos.txt
+*.log

@@ -2,7 +2,9 @@
 #   J.A.R.V.I.S. — Traslado del sistema a GitHub (Windows / PowerShell)
 #
 #   Uso: clic derecho sobre este archivo → «Ejecutar con PowerShell»
-#        (o bien:  powershell -ExecutionPolicy Bypass -File SUBIR-A-GITHUB.ps1)
+#        (o bien:  powershell -ExecutionPolicy Bypass -File SUBIR-A-GITHUB.ps1 [usuario] [repositorio])
+#   La primera vez preguntará sus datos y los guardará en «mis-datos.txt»:
+#   las siguientes veces ya no pregunta nada.
 #
 #   Requiere: git instalado → https://git-scm.com
 # ═══════════════════════════════════════════════════════════════════════
@@ -12,6 +14,26 @@ function O($t){ Write-Host $t -ForegroundColor Yellow }
 function E($t){ Write-Host $t -ForegroundColor Red }
 
 C "J.A.R.V.I.S.: iniciando el traslado a GitHub, señor."
+
+# ───────────── 0. Sus datos (se guardan para no volver a preguntar) ─────────────
+$datos = "mis-datos.txt"
+$usuario = ""; $nombre = ""
+if (Test-Path $datos) {
+    foreach ($linea in Get-Content $datos) {
+        if ($linea -match '^usuario=(.+)$')      { $usuario = $Matches[1] }
+        if ($linea -match '^repositorio=(.+)$')  { $nombre  = $Matches[1] }
+    }
+}
+if ([string]::IsNullOrWhiteSpace($usuario)) {
+    $usuario = Read-Host "Su usuario de GitHub"
+    if ([string]::IsNullOrWhiteSpace($usuario)) { E "Sin usuario no puedo continuar, señor."; exit 1 }
+    $resp = Read-Host "Nombre del repositorio [$(if($nombre){$nombre}else{'jarvis'})]"
+    if (-not [string]::IsNullOrWhiteSpace($resp)) { $nombre = $resp }
+    if ([string]::IsNullOrWhiteSpace($nombre)) { $nombre = "jarvis" }
+    "usuario=$usuario`nrepositorio=$nombre" | Set-Content $datos -Encoding UTF8
+    C "Datos guardados en $datos (podrá editarlos cuando quiera)."
+}
+if ([string]::IsNullOrWhiteSpace($nombre)) { $nombre = "jarvis" }
 
 if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
     E "No encuentro git. Instálelo desde https://git-scm.com y vuelva a intentarlo, señor."
@@ -42,12 +64,6 @@ if ([string]::IsNullOrWhiteSpace($pendiente)) {
 git branch -M main 2>$null | Out-Null
 
 # ───────────── 2. Datos del destino ─────────────
-$usuario = Read-Host "Su usuario de GitHub"
-if ([string]::IsNullOrWhiteSpace($usuario)) { E "Sin usuario no puedo continuar."; exit 1 }
-
-$nombre = Read-Host "Nombre del repositorio [jarvis]"
-if ([string]::IsNullOrWhiteSpace($nombre)) { $nombre = "jarvis" }
-
 git remote remove origin 2>$null | Out-Null
 git remote add origin "https://github.com/$usuario/$nombre.git"
 
